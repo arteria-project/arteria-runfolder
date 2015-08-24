@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cp ./runfolder-wsd /etc/init.d/
+sudo update-rc.d runfolder-wsd defaults

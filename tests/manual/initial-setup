@@ -1,0 +1,10 @@
+#!/bin/bash
+monitored_base=/var/local/arteria
+
+for i in {1..2}
+do 
+  monitored=$monitored_base/mon$i
+  echo "Creating $monitored"
+  mkdir -p $monitored
+  chown vagrant:vagrant $monitored
+done

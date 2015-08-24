@@ -1,0 +1,5 @@
+-r prod
+nose
+nose-watch
+requests
+mock

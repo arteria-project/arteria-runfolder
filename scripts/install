@@ -1,0 +1,100 @@
+#!/bin/bash
+# Setup latest version of the runfolder service:
+
+# This requires pip and virtualenv
+
+echo "Running install as '$(id)'"
+
+if [ "$(id -u)" != "0" ]; then
+    echo "You must run this script as root" 1>&2
+    exit 1
+fi
+
+user=$1
+group=$2
+type=$3
+source=$4
+installpath=$5
+product="runfolder"
+# TODO: Take as parameter:
+logpath=/var/log/$product
+
+if [ "$user" == "" ]; then
+    user="root"
+fi
+
+if [ "$group" == "" ]; then
+    group="root"
+fi
+
+if [ "$type" == "" ]; then
+    type="dev"
+fi
+
+if [ "$source" == "" ]; then
+    source="/arteria/arteria-lib/runfolder"
+fi
+
+if [ "$installpath" == "" ]; then
+    installpath="/opt/$product"
+fi
+
+echo "Installing from $source to $installpath, type=$type"
+mkdir -pv $installpath/etc
+virtualenv $installpath/
+cp $source/config/runfolder.config $installpath/etc/
+chown -R $user:$user $installpath
+
+echo "Creating log directory at $logpath"
+mkdir -pv $logpath
+chown -R $user:$user $logpath
+echo "Copying default logger.config to $installpath/etc"
+cp $source/config/logger.config $installpath/etc/
+
+# activate the virtualenv
+echo "Switching to the '$installpath' virtualenv"
+source $installpath/bin/activate
+
+if [ "$type" == "dev" ]; then
+    echo "Installing the $product package in development mode"
+    pip install -e file://$source -r $source/requirements/dev
+else
+    # TODO: Support prod
+    echo "NOTE: Installing the $product package in development mode" >&2
+    pip install -e file://$source -r $source/requirements/prod
+fi
+
+echo "Registering the runfolder-wsd daemon"
+cd $source/scripts/
+# TODO: no cd
+./install-daemon
+
+echo "Starting runfolder-wsd"
+if [ "$type" == "dev" ]; then
+    service runfolder-wsd restart dev
+else
+    service runfolder-wsd restart
+fi
+
+if [ "$?" != "0" ]; then
+    echo "Not able to start the service" 1>&2
+    exit 1
+fi
+
+if [ "$type" == "dev" ]; then
+    echo "Add runfolder-ws-test for easy integration testing"
+    testbin="/usr/bin/runfolder-ws-test"
+    echo "source $installpath/bin/activate" > $testbin
+    echo "nosetests $source/tests/integration" >> $testbin
+
+    chmod +x $testbin
+
+    echo "Running integration tests"
+    $testbin
+else
+    echo "Not running tests"
+fi
+
+echo "Moving back to the default python environment"
+
+

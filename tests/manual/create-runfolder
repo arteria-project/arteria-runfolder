@@ -1,0 +1,26 @@
+#!/bin/bash
+set -e
+
+monitored_base=/data/testarteria1
+# For now, we just create everything in the first mon folder:
+basefolder=$monitored_base/mon1
+runfolder="$basefolder/runfolder_$(date +%s)"
+echo "Creating $runfolder"
+mkdir -p $runfolder
+
+if [ "$1" == "" ]
+then
+  sleep_for=0
+else
+  sleep_for=$1
+fi
+
+echo Sleeping for $sleep_for seconds
+
+sleep $sleep_for
+
+complete_file="$runfolder/RTAComplete.txt"
+echo "Adding the file RTAComplete.txt to $runfolder, indicating successful processing on seq device"
+touch $complete_file
+
+echo "DONE"

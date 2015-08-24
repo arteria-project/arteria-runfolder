@@ -1,0 +1,11 @@
+A self contained (Tornado) REST service for managing runfolders.
+
+Install:
+    # install the runfolder_ws package and create the script runfolder-ws
+    python setup.py install
+
+    # install the daemon, after this you can manage the service through
+    # etc/init.d/runfolder-ws
+    install-daemon
+
+

@@ -1,0 +1,104 @@
+#! /bin/bash
+
+### BEGIN INIT INFO
+# Provides:          runfolder-wsd
+# Required-Start:    $local_fs $remote_fs $network $syslog
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: Provides a web service interface on the runfolder monitor service
+# Description: Provides a web service interface on the runfolder monitor service
+### END INIT INFO
+
+
+# Execute in the /opt/runfolder virtualenv:
+source /opt/runfolder/bin/activate
+daemon_name=`basename $0`
+log_path="/var/log/runfolder"
+config_path="/opt/runfolder/etc"
+log="$log_path/$daemon_name.log"
+executable="/opt/runfolder/bin/runfolder-ws"
+if [ "$2" == "dev" ]; then
+    dbgflag="--debug"
+fi
+cmd="$executable $dbgflag"
+
+is_running() {
+    ps aux | grep -v grep | grep -v SCREEN | grep --quiet "$executable"
+}
+
+require_root() {
+    if ! [ $(id -u) = 0 ]; then
+        echo "You need to be root" >&2
+        exit 1
+    fi
+}
+
+start() {
+    if is_running; then
+        echo "The service is already running"
+        exit 1
+    fi
+    require_root
+    echo "Attempting to start $cmd in screen session 'runfolder-ws'" | tee -a $log
+    screen -S runfolder-ws -d -m $cmd
+
+
+    for tries in {1..5}
+    do
+	if ! is_running; then
+	    echo "Service not yet started: $cmd" | tee -a $log
+	else
+	    echo "Successfully started $cmd" | tee -a $log
+            exit 0
+	fi
+        sleep 1
+    done
+
+    exit 1 # Not able to start successfully
+}
+
+stop() {
+    pid=$(ps aux | grep -v grep | grep -v SCREEN | grep "$executable" | awk '{ print $2 }')
+    if [ "$pid" == "" ]; then
+        echo "The service is not running" >&2
+        exit 1
+    else
+        require_root
+        echo "Killing process $pid"
+        kill -15 $pid
+    fi
+}
+
+case "$1" in
+
+  status)
+    if is_running; then
+            echo "Running"
+    else
+            echo "Stopped"
+            exit 1
+    fi
+        ;;
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  restart)
+    if is_running; then
+        stop
+    fi
+    start
+    ;;
+  reload|restart|force-reload|status)
+        echo "Command not supported"
+    ;;
+  *)
+    echo "Usage:  {start|status|stop}" >&2
+    exit 1
+    ;;
+esac
+
+exit 0
