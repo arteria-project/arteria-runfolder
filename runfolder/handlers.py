@@ -3,17 +3,30 @@ from arteria.web.handlers import BaseRestHandler
 from runfolder.services import *
 import tornado.web
 
+
 class BaseRunfolderHandler(BaseRestHandler):
     """Provides core logic for all runfolder handlers"""
+
+    def data_received(self, chunk):
+        """Empty implementation of abstract method"""
+        pass
+
     def append_runfolder_link(self, runfolder_info):
+        """
+        Adds a new attribute (link) to the runfolder_info object, that points to
+        the HTTP endpoint of the runfolder
+        """
         runfolder_info.link = self.create_runfolder_link(runfolder_info.path)
 
     def create_runfolder_link(self, path):
+        """Creates an HTTP endpoint from the path"""
         return "{0:s}/runfolders/path{1:s}".format(self.api_link(), path)
 
     def initialize(self, runfolder_svc, config_svc):
+        """Initializes the handler's member variables"""
         self.runfolder_svc = runfolder_svc
         self.config_svc = config_svc
+
 
 class ListAvailableRunfoldersHandler(BaseRunfolderHandler):
     """Handles listing all available runfolders"""
@@ -25,12 +38,15 @@ class ListAvailableRunfoldersHandler(BaseRunfolderHandler):
 
         self.write_object(runfolder_infos)
 
+
 class NextAvailableRunfolderHandler(BaseRunfolderHandler):
+    """Handles fetching the next available runfolder"""
     def get(self):
         """Returns the next runfolder to process"""
         runfolder_info = self.runfolder_svc.next_runfolder()
         self.append_runfolder_link(runfolder_info)
         self.write_object(runfolder_info)
+
 
 class RunfolderHandler(BaseRunfolderHandler):
     """Handles a particular runfolder, identified by path"""
@@ -51,21 +67,22 @@ class RunfolderHandler(BaseRunfolderHandler):
 
     def post(self, path):
         """
-        Sets the state of the runfolder
+        Sets the state of the runfolder. TODO: Not implemented
         """
-        self.runfolder_svc.set_runfolder_state(path, "TODO")
+        # self.runfolder_svc.set_runfolder_state(path, "TODO")
+        raise NotImplementedError()
 
     @arteria.undocumented
     def put(self, path):
         """
         NOTE: put is provided for test purposes only.
-
-        TODO: Discuss if it should be disabled in production
         """
+        # TODO: Discuss if it should be disabled in production
         try:
             self.runfolder_svc.create_runfolder(path)
         except PathNotMonitored:
             raise tornado.web.HTTPError("400", "Path {0} is not monitored".format(path))
+
 
 class TestFakeSequencerReadyHandler(BaseRunfolderHandler):
     """

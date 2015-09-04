@@ -2,13 +2,15 @@ import os.path
 import socket
 import logging
 
+
 class RunfolderInfo:
-    """Information about a runfolder. Status can be:
-            none: Not ready for processing or invalid
-            ready: Ready for processing by Arteria
-            started: Arteria started processing the runfolder
-            done: Arteria is done processing the runfolder
-            error: Arteria started processing the runfolder but there was an error
+    """
+    Information about a runfolder. Status can be:
+        none: Not ready for processing or invalid
+        ready: Ready for processing
+        started: Started processing the runfolder
+        done: Done processing the runfolder
+        error: Started processing the runfolder but there was an error
     """
 
     STATE_NONE = "none"
@@ -18,12 +20,21 @@ class RunfolderInfo:
     STATE_ERROR = "error"
 
     def __init__(self, host, path, state):
+        """
+        Initializes the object
+
+        :param host: The host where the runfolder exists
+        :param path: The file system path to the runfolder on the host
+        :param state: The state of the runfolder (see STATE_*)
+        """
+
         self.host = host
         self.path = path
         self.state = state
 
-    def __str__(self):
+    def __repr__(self):
         return "{0}: {1}@{2}".format(self.state, self.path, self.host)
+
 
 class RunfolderService:
     """Watches a set of directories on the server and reacts when one of them
@@ -157,6 +168,7 @@ class RunfolderService:
             f.write(state)
 
     def is_runfolder_ready(self, directory):
+        """Returns True if the runfolder is ready"""
         state = self.get_runfolder_state(directory)
         self._logger.debug("Checking {0}. state={1}".format(directory, state))
         return state == RunfolderInfo.STATE_READY
@@ -165,7 +177,7 @@ class RunfolderService:
         return self._configuration_svc["monitored_directories"]
 
     def next_runfolder(self):
-        """Pulls for available run folders"""
+        """Returns the next available runfolder. Returns None if there is none available."""
         available = self.list_available_runfolders()
         try:
             first = available.next()
@@ -190,14 +202,18 @@ class RunfolderService:
                                          directory, RunfolderInfo.STATE_READY)
                     yield info
 
+
 class CannotOverrideFile(Exception):
     pass
+
 
 class DirectoryDoesNotExist(Exception):
     pass
 
+
 class PathNotMonitored(Exception):
     pass
+
 
 class DirectoryAlreadyExists(Exception):
     pass
