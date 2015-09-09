@@ -2,6 +2,8 @@ import os.path
 import socket
 import logging
 
+from runfolder import __version__ as version
+
 class RunfolderInfo:
     """Information about a runfolder. Status can be:
             none: Not ready for processing or invalid
@@ -21,6 +23,7 @@ class RunfolderInfo:
         self.host = host
         self.path = path
         self.state = state
+        self.service_version = version
 
     def __str__(self):
         return "{0}: {1}@{2}".format(self.state, self.path, self.host)
