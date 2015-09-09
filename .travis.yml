@@ -7,7 +7,7 @@ install:
     - pip install -e . -r ./requirements.txt  
 
 script:
-    - nosetests tests/
+    - nosetests tests/unit/
 
 notifications:
     email: false
