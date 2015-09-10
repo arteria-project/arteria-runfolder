@@ -1,11 +1,20 @@
 A self contained (Tornado) REST service for managing runfolders.
 
-Install:
-    # install the runfolder_ws package and create the script runfolder-ws
-    python setup.py install
+Install in development environment
+----------------------------------
+pip install -e . -r requirements/dev
 
-    # install the daemon, after this you can manage the service through
-    # etc/init.d/runfolder-ws
-    install-daemon
+Test
+----
+After install you could run the integration tests to see if everything works as expected:
+    ./tests/run_integration_tests.py
 
+This will start a local server, run the integration tests on it and then shut the server down.
 
+Unit tests can be run with
+    nosetests ./tests/unit
+
+Install in production
+---------------------
+One way to install this in a production environment using supervisor,
+can be seen at https://github.com/arteria-project/arteria-provisioning

@@ -8,7 +8,7 @@ def read_file(fname):
 setup(
     name='runfolder',
     version=__version__,
-    description="Micro-service for managing runfolders",
+    description="Microservice for managing runfolders",
     long_description=read_file('README'),
     keywords='bioinformatics',
     author='SNP&SEQ Technology Platform, Uppsala University',

@@ -1,7 +1,7 @@
 import unittest
 import time
 from arteria.testhelpers import TestFunctionDelta, BaseRestTest
-import os.path
+import os
 
 
 def line_count(path):
@@ -13,7 +13,11 @@ def line_count(path):
 
 class RestApiTestCase(BaseRestTest):
     def _base_url(self):
-        return "http://localhost:10800/api/1.0"
+        env_key = "ARTERIA_RUNFOLDER_SVC_URL"
+        if env_key in os.environ:
+            return os.environ[env_key]
+        else:
+            return "http://localhost:10800/api/1.0"
 
     # NOTE: Also tests log files, so currently needs to run from the server
     # itself, and the log files being tested against are assumed to be small
@@ -30,10 +34,6 @@ class RestApiTestCase(BaseRestTest):
         # For the rest of the test, and by default, we should have log level WARNING
         self.put("./admin/log_level", {"log_level": "WARNING"})
 
-    def test_basic_smoke_test(self):
-        self.get("http://testarteria1:10800/api")
-        self.messages_logged.assert_changed_by_total(0)
-
     def test_not_monitored_path_returns_400(self):
         self.get("./runfolders/path/notmonitored/dir/", expect=400)
         # Tornado currently writes two entries for 400, for tornado.general and tornado.access
@@ -49,7 +49,6 @@ class RestApiTestCase(BaseRestTest):
 
         # Now, create the folder
         self.put("./runfolders/path{0}".format(path), expect=201)
-
         # Create the complete marker
         self.put("./runfolders/test/markasready/path{0}".format(path))
 
