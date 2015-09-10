@@ -78,11 +78,13 @@ class RunfolderService:
         """
         Creates a runfolder at the path.
 
-        Provided for integration tests only.
+        Provided for integration tests only and only available if the
+        config value can_create_runfolder is True.
 
         :raises PathNotMonitored
         :raises DirectoryAlreadyExists
         """
+        self._requires_enabled("can_create_runfolder")
         self._validate_is_being_monitored(path)
         if os.path.exists(path):
             raise DirectoryAlreadyExists("The path {0} already exists and can't be overridden".format(path))
@@ -95,11 +97,13 @@ class RunfolderService:
         Adds the marker that sets the `ready` state of a runfolder.
         This marker is generally added by the sequencer
 
-        Provided for integration tests only.
+        Provided for integration tests only and only available if the config value
+        can_create_runfolder is set to True.
 
         :raises DirectoryDoesNotExist
         :raises CannotOverrideFile
         """
+        self._requires_enabled("can_create_runfolder")
         if not os.path.isdir(path):
             raise DirectoryDoesNotExist(
                 "The path '{0}' is not an existing directory".format(path))
@@ -174,7 +178,10 @@ class RunfolderService:
         return state == RunfolderInfo.STATE_READY
 
     def _monitored_directories(self):
-        return self._configuration_svc["monitored_directories"]
+        """Lists all directories monitored for new runfolders"""
+        monitored = self._configuration_svc["monitored_directories"]
+        for directory in monitored:
+            yield os.path.abspath(directory)
 
     def next_runfolder(self):
         """Returns the next available runfolder. Returns None if there is none available."""
@@ -202,6 +209,11 @@ class RunfolderService:
                                          directory, RunfolderInfo.STATE_READY)
                     yield info
 
+    def _requires_enabled(self, config_key):
+        """Raises an ActionNotEnabled exception if the specified config value is false"""
+        if not self._configuration_svc[config_key]:
+            raise ActionNotEnabled("The action {0} is not enabled".format(config_key))
+
 
 class CannotOverrideFile(Exception):
     pass
@@ -216,5 +228,9 @@ class PathNotMonitored(Exception):
 
 
 class DirectoryAlreadyExists(Exception):
+    pass
+
+
+class ActionNotEnabled(Exception):
     pass
 

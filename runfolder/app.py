@@ -9,7 +9,7 @@ def start():
 
     # Setup the routing. Help will be automatically available at /api, and will be based on
     # the doc strings of the get/post/put/delete methods
-    args = dict(runfolder_svc=runfolder_svc, config_svc=app_svc.config_svc)
+    args = dict(app_svc=app_svc, runfolder_svc=runfolder_svc, config_svc=app_svc.config_svc)
     routes = [
         (r"/api/1.0/runfolders", ListAvailableRunfoldersHandler, args),
         (r"/api/1.0/runfolders/next", NextAvailableRunfolderHandler, args),
