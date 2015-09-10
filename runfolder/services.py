@@ -1,6 +1,7 @@
 import os.path
 import socket
 import logging
+from runfolder import __version__ as version
 
 
 class RunfolderInfo:
@@ -31,6 +32,7 @@ class RunfolderInfo:
         self.host = host
         self.path = path
         self.state = state
+        self.service_version = version
 
     def __repr__(self):
         return "{0}: {1}@{2}".format(self.state, self.path, self.host)
