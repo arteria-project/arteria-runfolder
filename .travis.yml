@@ -4,10 +4,11 @@ python:
     - "2.7"
 
 install:
-    - pip install -e . -r ./requirements.txt  
+    - pip install -e . -r ./requirements/dev
 
 script:
-    - nosetests tests/unit/
+    - nosetests tests/unit
+    - ./tests/run_integration_tests.py
 
 notifications:
     email: false

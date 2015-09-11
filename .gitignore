@@ -7,3 +7,5 @@ dist/
 *.egg
 .python-env/
 .coverage
+runfolder.log
+tests/integration/monitored

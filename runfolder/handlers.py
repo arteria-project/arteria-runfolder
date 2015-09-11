@@ -3,34 +3,53 @@ from arteria.web.handlers import BaseRestHandler
 from runfolder.services import *
 import tornado.web
 
+
 class BaseRunfolderHandler(BaseRestHandler):
     """Provides core logic for all runfolder handlers"""
+
+    def data_received(self, chunk):
+        """Empty implementation of abstract method"""
+        pass
+
     def append_runfolder_link(self, runfolder_info):
+        """
+        Adds a new attribute (link) to the runfolder_info object, that points to
+        the HTTP endpoint of the runfolder
+        """
         runfolder_info.link = self.create_runfolder_link(runfolder_info.path)
 
     def create_runfolder_link(self, path):
+        """Creates an HTTP endpoint from the path"""
         return "{0:s}/runfolders/path{1:s}".format(self.api_link(), path)
 
-    def initialize(self, runfolder_svc, config_svc):
+    def initialize(self, app_svc, runfolder_svc, config_svc):
+        """Initializes the handler's member variables"""
+        self.app_svc = app_svc
         self.runfolder_svc = runfolder_svc
         self.config_svc = config_svc
+
 
 class ListAvailableRunfoldersHandler(BaseRunfolderHandler):
     """Handles listing all available runfolders"""
     def get(self):
         """List all available runfolders"""
-        runfolder_infos = list(self.runfolder_svc.list_available_runfolders())
-        for runfolder_info in runfolder_infos:
-            self.append_runfolder_link(runfolder_info)
+        def get_runfolders():
+            for runfolder_info in self.runfolder_svc.list_available_runfolders():
+                self.append_runfolder_link(runfolder_info)
+                yield runfolder_info
 
-        self.write_object(runfolder_infos)
+        self.write_object({"runfolders": [runfolder.__dict__ for runfolder in get_runfolders()]})
+
 
 class NextAvailableRunfolderHandler(BaseRunfolderHandler):
+    """Handles fetching the next available runfolder"""
     def get(self):
         """Returns the next runfolder to process"""
         runfolder_info = self.runfolder_svc.next_runfolder()
-        self.append_runfolder_link(runfolder_info)
+        if runfolder_info:
+            self.append_runfolder_link(runfolder_info)
         self.write_object(runfolder_info)
+
 
 class RunfolderHandler(BaseRunfolderHandler):
     """Handles a particular runfolder, identified by path"""
@@ -51,21 +70,28 @@ class RunfolderHandler(BaseRunfolderHandler):
 
     def post(self, path):
         """
-        Sets the state of the runfolder
+        Sets the state of the runfolder. TODO: Not implemented
         """
-        self.runfolder_svc.set_runfolder_state(path, "TODO")
+        # self.runfolder_svc.set_runfolder_state(path, "TODO")
+        raise NotImplementedError()
 
     @arteria.undocumented
     def put(self, path):
         """
-        NOTE: put is provided for test purposes only.
+        Creates the runfolder at the path.
 
-        TODO: Discuss if it should be disabled in production
+        Enabled in debug mode only, to support integration tests.
         """
         try:
             self.runfolder_svc.create_runfolder(path)
+            self.set_status(201, "Created a new runfolder")
         except PathNotMonitored:
-            raise tornado.web.HTTPError("400", "Path {0} is not monitored".format(path))
+            raise tornado.web.HTTPError(400, "Path {0} is not monitored".format(path))
+        except ActionNotEnabled:
+            raise tornado.web.HTTPError(400, "The action is not enabled")
+        except DirectoryAlreadyExists:
+            raise tornado.web.HTTPError(400, "Directory exists")
+
 
 class TestFakeSequencerReadyHandler(BaseRunfolderHandler):
     """
@@ -79,6 +105,8 @@ class TestFakeSequencerReadyHandler(BaseRunfolderHandler):
         """
         Marks the runfolder at the path as ready
         """
-        self.runfolder_svc.add_sequencing_finished_marker(path)
-
+        try:
+            self.runfolder_svc.add_sequencing_finished_marker(path)
+        except ActionNotEnabled:
+            raise tornado.web.HTTPError(400, "The action is not enabled")
 

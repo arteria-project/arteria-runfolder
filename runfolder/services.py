@@ -1,16 +1,17 @@
 import os.path
 import socket
 import logging
-
 from runfolder import __version__ as version
 
+
 class RunfolderInfo:
-    """Information about a runfolder. Status can be:
-            none: Not ready for processing or invalid
-            ready: Ready for processing by Arteria
-            started: Arteria started processing the runfolder
-            done: Arteria is done processing the runfolder
-            error: Arteria started processing the runfolder but there was an error
+    """
+    Information about a runfolder. Status can be:
+        none: Not ready for processing or invalid
+        ready: Ready for processing
+        started: Started processing the runfolder
+        done: Done processing the runfolder
+        error: Started processing the runfolder but there was an error
     """
 
     STATE_NONE = "none"
@@ -20,13 +21,22 @@ class RunfolderInfo:
     STATE_ERROR = "error"
 
     def __init__(self, host, path, state):
+        """
+        Initializes the object
+
+        :param host: The host where the runfolder exists
+        :param path: The file system path to the runfolder on the host
+        :param state: The state of the runfolder (see STATE_*)
+        """
+
         self.host = host
         self.path = path
         self.state = state
         self.service_version = version
 
-    def __str__(self):
+    def __repr__(self):
         return "{0}: {1}@{2}".format(self.state, self.path, self.host)
+
 
 class RunfolderService:
     """Watches a set of directories on the server and reacts when one of them
@@ -70,11 +80,13 @@ class RunfolderService:
         """
         Creates a runfolder at the path.
 
-        Provided for integration tests only.
+        Provided for integration tests only and only available if the
+        config value can_create_runfolder is True.
 
         :raises PathNotMonitored
         :raises DirectoryAlreadyExists
         """
+        self._requires_enabled("can_create_runfolder")
         self._validate_is_being_monitored(path)
         if os.path.exists(path):
             raise DirectoryAlreadyExists("The path {0} already exists and can't be overridden".format(path))
@@ -87,11 +99,13 @@ class RunfolderService:
         Adds the marker that sets the `ready` state of a runfolder.
         This marker is generally added by the sequencer
 
-        Provided for integration tests only.
+        Provided for integration tests only and only available if the config value
+        can_create_runfolder is set to True.
 
         :raises DirectoryDoesNotExist
         :raises CannotOverrideFile
         """
+        self._requires_enabled("can_create_runfolder")
         if not os.path.isdir(path):
             raise DirectoryDoesNotExist(
                 "The path '{0}' is not an existing directory".format(path))
@@ -160,15 +174,19 @@ class RunfolderService:
             f.write(state)
 
     def is_runfolder_ready(self, directory):
+        """Returns True if the runfolder is ready"""
         state = self.get_runfolder_state(directory)
         self._logger.debug("Checking {0}. state={1}".format(directory, state))
         return state == RunfolderInfo.STATE_READY
 
     def _monitored_directories(self):
-        return self._configuration_svc["monitored_directories"]
+        """Lists all directories monitored for new runfolders"""
+        monitored = self._configuration_svc["monitored_directories"]
+        for directory in monitored:
+            yield os.path.abspath(directory)
 
     def next_runfolder(self):
-        """Pulls for available run folders"""
+        """Returns the next available runfolder. Returns None if there is none available."""
         available = self.list_available_runfolders()
         try:
             first = available.next()
@@ -193,15 +211,28 @@ class RunfolderService:
                                          directory, RunfolderInfo.STATE_READY)
                     yield info
 
+    def _requires_enabled(self, config_key):
+        """Raises an ActionNotEnabled exception if the specified config value is false"""
+        if not self._configuration_svc[config_key]:
+            raise ActionNotEnabled("The action {0} is not enabled".format(config_key))
+
+
 class CannotOverrideFile(Exception):
     pass
+
 
 class DirectoryDoesNotExist(Exception):
     pass
 
+
 class PathNotMonitored(Exception):
     pass
 
+
 class DirectoryAlreadyExists(Exception):
+    pass
+
+
+class ActionNotEnabled(Exception):
     pass
 
