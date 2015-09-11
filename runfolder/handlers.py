@@ -33,11 +33,12 @@ class ListAvailableRunfoldersHandler(BaseRunfolderHandler):
     """Handles listing all available runfolders"""
     def get(self):
         """List all available runfolders"""
-        runfolder_infos = list(self.runfolder_svc.list_available_runfolders())
-        for runfolder_info in runfolder_infos:
-            self.append_runfolder_link(runfolder_info)
+        def get_runfolders():
+            for runfolder_info in self.runfolder_svc.list_available_runfolders():
+                self.append_runfolder_link(runfolder_info)
+                yield runfolder_info
 
-        self.write_object(runfolder_infos)
+        self.write_object({"runfolders": [runfolder.__dict__ for runfolder in get_runfolders()]})
 
 
 class NextAvailableRunfolderHandler(BaseRunfolderHandler):

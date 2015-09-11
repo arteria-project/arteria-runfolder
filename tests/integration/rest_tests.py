@@ -54,7 +54,8 @@ class RestApiTestCase(BaseRestTest):
 
         # The runfolder should show up in /runfolders
         resp = self.get("./runfolders")
-        matching = [runfolder for runfolder in resp.body_obj if runfolder["path"] == path]
+        runfolders = resp.body_obj["runfolders"]
+        matching = [runfolder for runfolder in runfolders if runfolder["path"] == path]
         self.assertEqual(len(matching), 1)
 
         # TODO: Change state to "processing" and ensure it doesn't show up in /runfolders
