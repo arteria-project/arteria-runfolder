@@ -32,11 +32,22 @@ class BaseRunfolderHandler(BaseRestHandler):
 class ListAvailableRunfoldersHandler(BaseRunfolderHandler):
     """Handles listing all available runfolders"""
     def get(self):
-        """List all available runfolders"""
+        """
+        List all runfolders that are ready. Add the query parameter 'state'
+        for filtering. By default, state=ready is assumed. Query for state=* to
+        get all monitored runfolders.
+        """
         def get_runfolders():
-            for runfolder_info in self.runfolder_svc.list_available_runfolders():
-                self.append_runfolder_link(runfolder_info)
-                yield runfolder_info
+            try:
+                # TODO: This list should be paged. The unfiltered list can be large
+                state = self.get_argument("state", RunfolderInfo.STATE_READY)
+                if state == "*":
+                    state = None
+                for runfolder_info in self.runfolder_svc.list_runfolders(state):
+                    self.append_runfolder_link(runfolder_info)
+                    yield runfolder_info
+            except InvalidRunfolderState:
+                raise tornado.web.HTTPError(400, "The state '{}' is not accepted".format(state))
 
         self.write_object({"runfolders": [runfolder.__dict__ for runfolder in get_runfolders()]})
 
@@ -44,7 +55,10 @@ class ListAvailableRunfoldersHandler(BaseRunfolderHandler):
 class NextAvailableRunfolderHandler(BaseRunfolderHandler):
     """Handles fetching the next available runfolder"""
     def get(self):
-        """Returns the next runfolder to process"""
+        """
+        Returns the next runfolder to process. Note that it's currently assumed
+        that only one process polls this endpoint. No locking mechanism is in place.
+        """
         runfolder_info = self.runfolder_svc.next_runfolder()
         if runfolder_info:
             self.append_runfolder_link(runfolder_info)
@@ -70,10 +84,20 @@ class RunfolderHandler(BaseRunfolderHandler):
 
     def post(self, path):
         """
-        Sets the state of the runfolder. TODO: Not implemented
+        Sets the state of the runfolder. Note that it's currently assumed that only one
+        process changes the status, so the access to the runfolder is not locked.
+
+        Accepts the following JSON message: {"state": "[none|ready|started|done|error]"}
+
+        Returns: 200 if the state changed successfully
         """
-        # self.runfolder_svc.set_runfolder_state(path, "TODO")
-        raise NotImplementedError()
+        json_body = self.body_as_object(["state"])
+        state = json_body["state"]
+
+        try:
+            self.runfolder_svc.set_runfolder_state(path, state)
+        except InvalidRunfolderState:
+            raise tornado.web.HTTPError(400, "The state '{}' is not valid".format(state))
 
     @arteria.undocumented
     def put(self, path):

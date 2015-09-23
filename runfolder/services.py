@@ -164,8 +164,20 @@ class RunfolderService:
         return state
 
     @staticmethod
+    def validate_state(state):
+        """Raises InvalidRunfolderState if the state is not known"""
+        if state not in [RunfolderInfo.STATE_NONE,
+                         RunfolderInfo.STATE_READY,
+                         RunfolderInfo.STATE_STARTED,
+                         RunfolderInfo.STATE_DONE,
+                         RunfolderInfo.STATE_ERROR]:
+            raise InvalidRunfolderState("The state '{}' is not valid".format(state))
+
+
+    @staticmethod
     def set_runfolder_state(runfolder, state):
         """Sets the state of a runfolder"""
+        RunfolderService.validate_state(state)
         arteria_dir = os.path.join(runfolder, ".arteria")
         state_file = os.path.join(arteria_dir, "state")
         if not os.path.exists(arteria_dir):
@@ -187,7 +199,7 @@ class RunfolderService:
 
     def next_runfolder(self):
         """Returns the next available runfolder. Returns None if there is none available."""
-        available = self.list_available_runfolders()
+        available = self.list_runfolders(state=RunfolderInfo.STATE_READY)
         try:
             first = available.next()
         except StopIteration:
@@ -198,18 +210,30 @@ class RunfolderService:
         return first
 
     def list_available_runfolders(self):
-        """Lists all the available runfolders on the host"""
-        self._logger.debug("get_available_runfolder")
+        return self.list_runfolders(RunfolderInfo.STATE_READY)
+
+    def list_runfolders(self, state):
+        """
+        Lists all the runfolders on the host, filtered by state. State
+        can be any of RunfolderInfo.STATE_*. Specify None for no filtering.
+        """
+        runfolders = self._enumerate_runfolders()
+        if state:
+            RunfolderService.validate_state(state)
+            return (runfolder for runfolder in runfolders if runfolder.state == state)
+        else:
+            return runfolders
+
+    def _enumerate_runfolders(self):
+        """Enumerates all runfolders in any monitored directory"""
         for monitored_root in self._monitored_directories():
             self._logger.debug("Checking subdirectories of {0}".format(monitored_root))
             for subdir in self._subdirectories(monitored_root):
                 directory = os.path.join(monitored_root, subdir)
                 self._logger.debug("Found potential runfolder {0}".format(directory))
                 state = self.get_runfolder_state(directory)
-                if state == RunfolderInfo.STATE_READY:
-                    info = RunfolderInfo(self._host(),
-                                         directory, RunfolderInfo.STATE_READY)
-                    yield info
+                info = RunfolderInfo(self._host(), directory, state)
+                yield info
 
     def _requires_enabled(self, config_key):
         """Raises an ActionNotEnabled exception if the specified config value is false"""
@@ -234,5 +258,9 @@ class DirectoryAlreadyExists(Exception):
 
 
 class ActionNotEnabled(Exception):
+    pass
+
+
+class InvalidRunfolderState(Exception):
     pass
 
