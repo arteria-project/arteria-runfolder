@@ -35,7 +35,11 @@ def run_integration_tests():
     directory = os.path.dirname(os.path.realpath(__file__))
     configroot = os.path.join(directory, "integration", "config")
     args = ["runfolder-ws", "--port", str(port), "--debug", "--configroot", configroot]
-    service = subprocess.Popen(args)
+    try:
+        service = subprocess.Popen(args)
+    except OSError:
+        print "Can't find 'runfolder-ws', it might not be installed or virtualenv not activated"
+        raise
 
     print "Waiting for process to start listening on port {}".format(port)
     helper.wait_for_listening(port)
