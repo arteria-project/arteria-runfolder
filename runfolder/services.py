@@ -4,21 +4,41 @@ import logging
 from runfolder import __version__ as version
 
 
+class Enum(set):
+    """
+    Defines an enumeration which values are a string representation of the
+    specified attribute, i.e. EnumInstance.VAL1 == "VAL1"
+
+    Usage: EnumInstance = Enum(["VAL1", "VAL2"])
+
+    print EnumInstance.VAL1
+    > "VAL1"
+
+    if "VAL3" not in EnumInstance:
+        raise ...
+    """
+    def __getattr__(self, name):
+        if name in self:
+            return name
+        raise AttributeError
+
+    def __setattr__(self, key, value):
+        raise NotImplementedError("Values cannot be set directly")
+
+"""
+NONE: Not ready for processing or invalid
+READY: Ready for processing
+STARTED: Started processing the runfolder
+DONE: Done processing the runfolder
+ERROR: Started processing the runfolder but there was an error
+"""
+RunfolderState = Enum(["NONE", "READY", "STARTED", "DONE", "ERROR"])
+
+
 class RunfolderInfo:
     """
-    Information about a runfolder. Status can be:
-        none: Not ready for processing or invalid
-        ready: Ready for processing
-        started: Started processing the runfolder
-        done: Done processing the runfolder
-        error: Started processing the runfolder but there was an error
+    Information about a runfolder. Status must be defined in RunfolderState:
     """
-
-    STATE_NONE = "none"
-    STATE_READY = "ready"
-    STATE_STARTED = "started"
-    STATE_DONE = "done"
-    STATE_ERROR = "error"
 
     def __init__(self, host, path, state):
         """
@@ -26,7 +46,7 @@ class RunfolderInfo:
 
         :param host: The host where the runfolder exists
         :param path: The file system path to the runfolder on the host
-        :param state: The state of the runfolder (see STATE_*)
+        :param state: The state of the runfolder (see RunfolderState)
         """
 
         self.host = host
@@ -136,7 +156,7 @@ class RunfolderService:
     def _get_runfolder_state_from_state_file(self, runfolder):
         """
         Reads the state in the state file at .arteria/state, returns
-        RunfolderInfo.STATE_NONE if nothing is available
+        RunfolderState.NONE if nothing is available
         """
         state_file = os.path.join(runfolder, ".arteria", "state")
         if self._file_exists(state_file):
@@ -145,34 +165,29 @@ class RunfolderService:
                 state = state.strip()
                 return state
         else:
-            return RunfolderInfo.STATE_NONE
+            return RunfolderState.NONE
 
     def get_runfolder_state(self, runfolder):
         """
         Returns the state of a runfolder. The possible states are defined in
-        RunfolderInfo.STATE_*.
+        RunfolderState
 
         If the file .arteria/state exists, it will determine the state. If it doesn't
         exist, the existence of the marker file RTAComplete.txt determines the state.
         """
         state = self._get_runfolder_state_from_state_file(runfolder)
-        if state == RunfolderInfo.STATE_NONE:
+        if state == RunfolderState.NONE:
             completed_marker = os.path.join(runfolder, "RTAComplete.txt")
             ready = self._file_exists(completed_marker)
             if ready:
-                state = RunfolderInfo.STATE_READY
+                state = RunfolderState.READY
         return state
 
     @staticmethod
     def validate_state(state):
         """Raises InvalidRunfolderState if the state is not known"""
-        if state not in [RunfolderInfo.STATE_NONE,
-                         RunfolderInfo.STATE_READY,
-                         RunfolderInfo.STATE_STARTED,
-                         RunfolderInfo.STATE_DONE,
-                         RunfolderInfo.STATE_ERROR]:
+        if state not in RunfolderState:
             raise InvalidRunfolderState("The state '{}' is not valid".format(state))
-
 
     @staticmethod
     def set_runfolder_state(runfolder, state):
@@ -189,7 +204,7 @@ class RunfolderService:
         """Returns True if the runfolder is ready"""
         state = self.get_runfolder_state(directory)
         self._logger.debug("Checking {0}. state={1}".format(directory, state))
-        return state == RunfolderInfo.STATE_READY
+        return state == RunfolderState.READY
 
     def _monitored_directories(self):
         """Lists all directories monitored for new runfolders"""
@@ -199,7 +214,7 @@ class RunfolderService:
 
     def next_runfolder(self):
         """Returns the next available runfolder. Returns None if there is none available."""
-        available = self.list_runfolders(state=RunfolderInfo.STATE_READY)
+        available = self.list_runfolders(state=RunfolderState.READY)
         try:
             first = available.next()
         except StopIteration:
@@ -210,12 +225,12 @@ class RunfolderService:
         return first
 
     def list_available_runfolders(self):
-        return self.list_runfolders(RunfolderInfo.STATE_READY)
+        return self.list_runfolders(RunfolderState.READY)
 
     def list_runfolders(self, state):
         """
         Lists all the runfolders on the host, filtered by state. State
-        can be any of RunfolderInfo.STATE_*. Specify None for no filtering.
+        can be any of the values in RunfolderState. Specify None for no filtering.
         """
         runfolders = self._enumerate_runfolders()
         if state:

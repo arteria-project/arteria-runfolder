@@ -75,7 +75,7 @@ class RestApiTestCase(BaseRestTest):
         path = self._create_ready_runfolder()
         self.assertTrue(self._exists(path))
         # Mark the folder as processing
-        self.post("./runfolders/path{}".format(path), {"state": "started"}, expect=200)
+        self.post("./runfolders/path{}".format(path), {"state": "STARTED"}, expect=200)
         # Ensure that the folder is not listed anymore:
         self.assertFalse(self._exists(path))
 

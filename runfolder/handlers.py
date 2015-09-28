@@ -34,13 +34,13 @@ class ListAvailableRunfoldersHandler(BaseRunfolderHandler):
     def get(self):
         """
         List all runfolders that are ready. Add the query parameter 'state'
-        for filtering. By default, state=ready is assumed. Query for state=* to
+        for filtering. By default, state=READY is assumed. Query for state=* to
         get all monitored runfolders.
         """
         def get_runfolders():
             try:
                 # TODO: This list should be paged. The unfiltered list can be large
-                state = self.get_argument("state", RunfolderInfo.STATE_READY)
+                state = self.get_argument("state", RunfolderState.READY)
                 if state == "*":
                     state = None
                 for runfolder_info in self.runfolder_svc.list_runfolders(state):
@@ -87,7 +87,7 @@ class RunfolderHandler(BaseRunfolderHandler):
         Sets the state of the runfolder. Note that it's currently assumed that only one
         process changes the status, so the access to the runfolder is not locked.
 
-        Accepts the following JSON message: {"state": "[none|ready|started|done|error]"}
+        Accepts the following JSON message: {"state": "[NONE|READY|STARTED|DONE|ERROR]"}
 
         Returns: 200 if the state changed successfully
         """
