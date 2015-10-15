@@ -5,17 +5,27 @@ import os
 import logging
 import requests
 import jsonpickle
+import mock
 
 log = logging.getLogger(__name__)
 
 
 class RestApiTestCase(BaseRestTest):
     def _base_url(self):
-        env_key = "ARTERIA_RUNFOLDER_SVC_URL"
-        if env_key in os.environ:
-            return os.environ[env_key]
+        # TODO: It would be clearer to share these settings via a config file
+        key = "ARTERIA_RUNFOLDER_SVC_URL"
+        if key in os.environ:
+            return os.environ[key]
         else:
             return "http://localhost:10800/api/1.0"
+
+    def _get_monitored_dir(self):
+        key = "ARTERIA_RUNFOLDER_MONITORED_DIR"
+        if key in os.environ:
+            return os.environ[key]
+        else:
+            path_to_test_dir = os.path.dirname(os.path.realpath(__file__))
+            return "{0}/monitored".format(path_to_test_dir)
 
     # NOTE: Also tests log files, so currently needs to run from the server
     # itself, and the log files being tested against are assumed to be small
@@ -27,8 +37,13 @@ class RestApiTestCase(BaseRestTest):
                 count += 1
             return count
 
-        self.messages_logged = TestFunctionDelta(
-            lambda: line_count('./runfolder.log'), self, 0.1)
+        # Disable the log check if not running locally:
+        if not self._base_url().startswith("http://localhost"):
+            self.messages_logged = mock.MagicMock()
+            self.messages_logged.assert_changed_by_total = lambda x: None
+        else:
+            self.messages_logged = TestFunctionDelta(
+                lambda: line_count('./runfolder.log'), self, 0.1)
 
     def test_can_change_log_level(self):
         self.put("./admin/log_level", {"log_level": "DEBUG"})
@@ -96,10 +111,6 @@ class RestApiTestCase(BaseRestTest):
         self.put("./runfolders/path{0}".format(path), expect=201)
         self.put("./runfolders/test/markasready/path{0}".format(path))
         return path
-
-    def _get_monitored_dir(self):
-        path_to_test_dir = os.path.dirname(os.path.realpath(__file__))
-        return "{0}/monitored".format(path_to_test_dir)
 
     def post(self, relative_url, obj, expect=200):
         # TODO: Add to base object
