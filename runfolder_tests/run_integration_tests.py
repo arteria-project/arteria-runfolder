@@ -94,24 +94,20 @@ def run_integration_tests(url, runfolder_directory, log_file_path):
     integration_root = os.path.join(directory, "integration")
     tests_process = subprocess.Popen(["nosetests", integration_root])
     tests_process.wait()
+    print "Tests have finished running"
 
 
-def run_locally_if_needed(url=None, runfolder_directory=None, log_file_path=None):
-    # TODO: Refactor, starting to get a little bit unclear
-    local_server = None
-
-    if url is None:
-        helper = IntegrationTestHelper()
-        port = helper.find_port()
-        url = "http://localhost:{}/api/1.0".format(port)
-        test_run_dir = setup_testrun_dir()
-        local_server = setup_local_server(port, test_run_dir)
-        runfolder_directory = os.path.join(test_run_dir, "runfolders")
-        log_file_path = os.path.join(test_run_dir, "runfolder.log")
+def run_integration_tests_locally():
+    helper = IntegrationTestHelper()
+    port = helper.find_port()
+    url = "http://localhost:{}/api/1.0".format(port)
+    test_run_dir = setup_testrun_dir()
+    local_server = setup_local_server(port, test_run_dir)
+    runfolder_directory = os.path.join(test_run_dir, "runfolders")
+    log_file_path = os.path.join(test_run_dir, "runfolder.log")
 
     try:
         run_integration_tests(url, runfolder_directory, log_file_path)
-        print "Tests have finished running"
     finally:
         if local_server is not None:
             print "Terminating the locally running web service"
@@ -120,5 +116,9 @@ def run_locally_if_needed(url=None, runfolder_directory=None, log_file_path=None
 if __name__ == "__main__":
     url = sys.argv[1] if len(sys.argv) > 1 else None
     runfolder_directory = sys.argv[2] if len(sys.argv) > 2 else None
-    run_locally_if_needed(url, runfolder_directory)
+
+    if url is None:
+        run_integration_tests_locally()
+    else:
+        run_integration_tests(url, runfolder_directory, None)
 
