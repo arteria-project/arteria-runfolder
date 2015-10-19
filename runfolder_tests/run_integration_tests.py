@@ -59,15 +59,15 @@ def setup_testrun_dir():
     return os.path.realpath(test_run)
 
 
-def setup_local_server(port, dir):
+def setup_local_server(port, directory):
     """
     Starts a local server on an unused port and returns the process when the port
     starts listening
     """
 
     old_dir = os.getcwd()
-    os.chdir(dir)
-    print "Running server locally on port {}, from dir {}".format(port, dir)
+    os.chdir(directory)
+    print "Running server locally on port {}, from dir {}".format(port, directory)
     service = execute(["runfolder-ws", "--port", str(port), "--debug", "--configroot", "."])
 
     print "Waiting for process to start listening on port {}".format(port)

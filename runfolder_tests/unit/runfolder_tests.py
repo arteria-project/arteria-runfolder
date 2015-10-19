@@ -62,6 +62,19 @@ class RunfolderServiceTestCase(unittest.TestCase):
             RunfolderState.READY = "by accident"
         self.assertRaises(NotImplementedError, assign_by_accident)
 
+    def test_monitored_directory_validates(self):
+        configuration_svc = dict()
+        configuration_svc["monitored_directories"] = ["/data/testarteria1/runfolders"]
+        runfolder_svc = RunfolderService(configuration_svc, logger)
+
+        runfolder = "/data/testarteria1/runfolders/runfolder1"
+        # passes if no exception:
+        runfolder_svc._validate_is_being_monitored(runfolder)
+
+        # Doesn't matter if the configuration specifies an extra separator:
+        configuration_svc["monitored_directories"] = ["/data/testarteria1/runfolders/"]
+        runfolder_svc._validate_is_being_monitored(runfolder)
+
 
 if __name__ == '__main__':
     unittest.main()
