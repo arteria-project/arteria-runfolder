@@ -92,9 +92,12 @@ class RunfolderService:
 
         :raises PathNotMonitored
         """
-        monitored = any([path.startswith(mon) for mon in self._monitored_directories()])
-        if not monitored:
-            raise PathNotMonitored("The path {0} is not being monitored".format(path))
+        monitored = list(self._monitored_directories())
+        is_monitored = any([path.startswith(mon) for mon in monitored])
+        if not is_monitored:
+            self._logger.warn("Validation error: {} is not monitored {}".format(path, monitored))
+            raise PathNotMonitored(
+                "The path '{}' is not being monitored.".format(path))
 
     def create_runfolder(self, path):
         """

@@ -27,6 +27,14 @@ class RestApiTestCase(BaseRestTest):
             path_to_test_dir = os.path.dirname(os.path.realpath(__file__))
             return "{0}/monitored".format(path_to_test_dir)
 
+
+    def _get_log_file_path(self):
+        key = "ARTERIA_RUNFOLDER_LOG_FILE"
+        if key in os.environ:
+            return os.environ[key]
+        else:
+            return "./runfolder.log"
+
     # NOTE: Also tests log files, so currently needs to run from the server
     # itself, and the log files being tested against are assumed to be small
     # These tests are intended to be full integration tests, mocking nothing
@@ -43,7 +51,7 @@ class RestApiTestCase(BaseRestTest):
             self.messages_logged.assert_changed_by_total = lambda x: None
         else:
             self.messages_logged = TestFunctionDelta(
-                lambda: line_count('./runfolder.log'), self, 0.1)
+                lambda: line_count(self._get_log_file_path()), self, 0.1)
 
     def test_can_change_log_level(self):
         self.put("./admin/log_level", {"log_level": "DEBUG"})
@@ -56,7 +64,7 @@ class RestApiTestCase(BaseRestTest):
     def test_not_monitored_path_returns_400(self):
         self.get("./runfolders/path/notmonitored/dir/", expect=400)
         # Tornado currently writes two entries for 400, for tornado.general and tornado.access
-        self.messages_logged.assert_changed_by_total(2)
+        self.messages_logged.assert_changed_by_total(3)
 
     def test_can_create_and_update_state(self):
         # First, we want to make sure it's not there now, resulting in 404 warn log:

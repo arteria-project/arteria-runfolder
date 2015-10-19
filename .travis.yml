@@ -7,8 +7,8 @@ install:
     - pip install -e . -r ./requirements/dev
 
 script:
-    - nosetests tests/unit
-    - ./tests/run_integration_tests.py
+    - nosetests runfolder_tests/unit
+    - ./runfolder_tests/run_integration_tests.py
 
 notifications:
     email: false
