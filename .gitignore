@@ -9,3 +9,4 @@ dist/
 .coverage
 runfolder.log
 tests/integration/monitored
+testrun*/

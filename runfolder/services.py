@@ -92,9 +92,16 @@ class RunfolderService:
 
         :raises PathNotMonitored
         """
-        monitored = any([path.startswith(mon) for mon in self._monitored_directories()])
-        if not monitored:
-            raise PathNotMonitored("The path {0} is not being monitored".format(path))
+        def is_parent_dir(parent_dir, child_dir):
+            actual_parent = os.path.split(child_dir)[0]
+            return os.path.normpath(parent_dir) == actual_parent
+
+        monitored = list(self._monitored_directories())
+        is_monitored = any([is_parent_dir(mon, path) for mon in monitored])
+        if not is_monitored:
+            self._logger.warn("Validation error: {} is not monitored {}".format(path, monitored))
+            raise PathNotMonitored(
+                "The path '{}' is not being monitored.".format(path))
 
     def create_runfolder(self, path):
         """
@@ -209,6 +216,10 @@ class RunfolderService:
     def _monitored_directories(self):
         """Lists all directories monitored for new runfolders"""
         monitored = self._configuration_svc["monitored_directories"]
+
+        if (monitored is not None) and (type(monitored) is not list):
+            raise ConfigurationError("monitored_directories must be a list")
+
         for directory in monitored:
             yield os.path.abspath(directory)
 
@@ -277,5 +288,9 @@ class ActionNotEnabled(Exception):
 
 
 class InvalidRunfolderState(Exception):
+    pass
+
+
+class ConfigurationError(Exception):
     pass
 
