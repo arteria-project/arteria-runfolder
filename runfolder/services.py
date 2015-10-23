@@ -250,6 +250,16 @@ class RunfolderService:
         else:
             return runfolders
 
+    def get_settings(self):
+        """
+        Returns the settings of the service.
+        """
+        settings = self._configuration_svc.get_app_config()
+
+        # The monitored_directories can be relative. Callers will be interested in the absolute path.
+        settings["monitored_directories"] = list(self._monitored_directories())
+        return self._configuration_svc.get_app_config()
+
     def _enumerate_runfolders(self):
         """Enumerates all runfolders in any monitored directory"""
         for monitored_root in self._monitored_directories():

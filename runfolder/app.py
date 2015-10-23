@@ -14,7 +14,8 @@ def start():
         (r"/api/1.0/runfolders", ListAvailableRunfoldersHandler, args),
         (r"/api/1.0/runfolders/next", NextAvailableRunfolderHandler, args),
         (r"/api/1.0/runfolders/path(/.*)", RunfolderHandler, args),
-        (r"/api/1.0/runfolders/test/markasready/path(/.*)", TestFakeSequencerReadyHandler, args)
+        (r"/api/1.0/runfolders/test/markasready/path(/.*)", TestFakeSequencerReadyHandler, args),
+        (r"/api/1.0/admin/settings", SettingsHandler, args)  # TODO: Move to core
     ]
     app_svc.start(routes)
 
