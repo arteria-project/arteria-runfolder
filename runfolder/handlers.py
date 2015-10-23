@@ -60,10 +60,10 @@ class NextAvailableRunfolderHandler(BaseRunfolderHandler):
         that only one process polls this endpoint. No locking mechanism is in place.
         """
         runfolder_info = self.runfolder_svc.next_runfolder()
+
         if runfolder_info:
             self.append_runfolder_link(runfolder_info)
-        self.write_object(runfolder_info)
-
+            self.write_object(runfolder_info)
 
 class RunfolderHandler(BaseRunfolderHandler):
     """Handles a particular runfolder, identified by path"""
