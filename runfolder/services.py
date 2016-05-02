@@ -28,11 +28,13 @@ class Enum(set):
 """
 NONE: Not ready for processing or invalid
 READY: Ready for processing
+PENDING: This runfolder has been handed to some other service, and is awaiting having it's status set.
+         It will wait X number of minutes before becoming available again.
 STARTED: Started processing the runfolder
 DONE: Done processing the runfolder
 ERROR: Started processing the runfolder but there was an error
 """
-RunfolderState = Enum(["NONE", "READY", "STARTED", "DONE", "ERROR"])
+RunfolderState = Enum(["NONE", "READY", "PENDING", "STARTED", "DONE", "ERROR"])
 
 
 class RunfolderInfo:

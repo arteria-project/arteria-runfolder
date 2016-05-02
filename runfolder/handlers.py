@@ -56,13 +56,29 @@ class NextAvailableRunfolderHandler(BaseRunfolderHandler):
     """Handles fetching the next available runfolder"""
     def get(self):
         """
-        Returns the next runfolder to process. Note that it's currently assumed
-        that only one process polls this endpoint. No locking mechanism is in place.
+        Returns the next runfolder to process. Note that will not lock the runfolder, and unless it's
+        state is changed by the polling client quickly enough it will be presented again.
         """
         runfolder_info = self.runfolder_svc.next_runfolder()
         if runfolder_info:
             self.append_runfolder_link(runfolder_info)
         self.write_object(runfolder_info)
+
+
+class PickupAvailableRunfolderHandler(BaseRunfolderHandler):
+    """Handles fetching the next available runfolder"""
+    def get(self):
+        """
+        Returns the next runfolder to process and set it's state to PENDING.
+        """
+        runfolder_info = self.runfolder_svc.next_runfolder()
+        if runfolder_info:
+            self.append_runfolder_link(runfolder_info)
+            self.runfolder_svc.set_runfolder_state(runfolder_info.path, RunfolderState.PENDING)
+            runfolder_info.state = RunfolderState.PENDING
+            self.write_object(runfolder_info)
+        else:
+            self.write(dict())
 
 
 class RunfolderHandler(BaseRunfolderHandler):
