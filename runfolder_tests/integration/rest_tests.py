@@ -6,6 +6,7 @@ import logging
 import requests
 import jsonpickle
 import mock
+from runfolder.services import RunfolderState
 
 log = logging.getLogger(__name__)
 
@@ -26,7 +27,6 @@ class RestApiTestCase(BaseRestTest):
         else:
             path_to_test_dir = os.path.dirname(os.path.realpath(__file__))
             return "{0}/monitored".format(path_to_test_dir)
-
 
     def _get_log_file_path(self):
         key = "ARTERIA_RUNFOLDER_LOG_FILE"
@@ -60,6 +60,22 @@ class RestApiTestCase(BaseRestTest):
 
         # For the rest of the test, and by default, we should have log level WARNING
         self.put("./admin/log_level", {"log_level": "WARNING"})
+
+    def test_next_throws_no_error_if_empty(self):
+        """
+        Regression test: Calling next when the list of items is empty
+        resulted in a 500 error, rather than returning None
+
+        NOTE: This test assumes synchronous testing. If other tests add
+        runfolders in the ready state while this is running, it might fail
+        """
+
+        self._mark_all_runfolders(RunfolderState.STARTED)
+
+        # Ensure that we don't get an error message from /next:
+        resp = self.get("./runfolders/next", expect=200)
+
+        self.assertTrue(resp.body_obj is None)
 
     def test_not_monitored_path_returns_400(self):
         self.get("./runfolders/path/notmonitored/dir/", expect=400)
@@ -106,6 +122,12 @@ class RestApiTestCase(BaseRestTest):
         path = self._create_ready_runfolder()
         self.assertTrue(self._exists(path))
         self.post("./runfolders/path{}".format(path), {"state": "NOT-AVAILABLE"}, expect=400)
+
+    def _mark_all_runfolders(self, state):
+        resp = self.get("./runfolders")
+        runfolders = resp.body_obj["runfolders"]
+        for runfolder in runfolders:
+            self.post("./runfolders/path{}".format(runfolder["path"]), {"state": state}, expect=200)
 
     def _exists(self, path):
         resp = self.get("./runfolders")

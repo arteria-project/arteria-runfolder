@@ -60,9 +60,10 @@ class NextAvailableRunfolderHandler(BaseRunfolderHandler):
         that only one process polls this endpoint. No locking mechanism is in place.
         """
         runfolder_info = self.runfolder_svc.next_runfolder()
+
         if runfolder_info:
             self.append_runfolder_link(runfolder_info)
-        self.write_object(runfolder_info)
+            self.write_object(runfolder_info)
 
 
 class RunfolderHandler(BaseRunfolderHandler):
@@ -115,6 +116,15 @@ class RunfolderHandler(BaseRunfolderHandler):
             raise tornado.web.HTTPError(400, "The action is not enabled")
         except DirectoryAlreadyExists:
             raise tornado.web.HTTPError(400, "Directory exists")
+
+
+class SettingsHandler(BaseRunfolderHandler):
+    def get(self):
+        """
+        Returns the settings for the application.
+        """
+        settings = self.runfolder_svc.get_settings()
+        self.write_object(settings)
 
 
 class TestFakeSequencerReadyHandler(BaseRunfolderHandler):
