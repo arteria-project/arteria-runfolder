@@ -3,6 +3,9 @@ import socket
 import logging
 from runfolder import __version__ as version
 
+from arteria.web.state import State
+
+
 
 class Enum(set):
     """
@@ -18,7 +21,7 @@ class Enum(set):
         raise ...
     """
     def __getattr__(self, name):
-        if name in self:
+        if name.lower() in self or name.upper() in self:
             return name
         raise AttributeError
 
@@ -34,7 +37,8 @@ STARTED: Started processing the runfolder
 DONE: Done processing the runfolder
 ERROR: Started processing the runfolder but there was an error
 """
-RunfolderState = Enum(["NONE", "READY", "PENDING", "STARTED", "DONE", "ERROR"])
+RunfolderState = Enum([State.NONE, State.READY, State.PENDING, State.STARTED, State.DONE, State.ERROR])
+
 
 
 class RunfolderInfo:
@@ -165,7 +169,7 @@ class RunfolderService:
     def _get_runfolder_state_from_state_file(self, runfolder):
         """
         Reads the state in the state file at .arteria/state, returns
-        RunfolderState.NONE if nothing is available
+        State.NONE if nothing is available
         """
         state_file = os.path.join(runfolder, ".arteria", "state")
         if self._file_exists(state_file):
@@ -174,22 +178,22 @@ class RunfolderService:
                 state = state.strip()
                 return state
         else:
-            return RunfolderState.NONE
+            return State.NONE
 
     def get_runfolder_state(self, runfolder):
         """
         Returns the state of a runfolder. The possible states are defined in
-        RunfolderState
+        State
 
         If the file .arteria/state exists, it will determine the state. If it doesn't
         exist, the existence of the marker file RTAComplete.txt determines the state.
         """
         state = self._get_runfolder_state_from_state_file(runfolder)
-        if state == RunfolderState.NONE:
+        if state == State.NONE:
             completed_marker = os.path.join(runfolder, "RTAComplete.txt")
             ready = self._file_exists(completed_marker)
             if ready:
-                state = RunfolderState.READY
+                state = State.READY
         return state
 
     @staticmethod
@@ -212,8 +216,8 @@ class RunfolderService:
     def is_runfolder_ready(self, directory):
         """Returns True if the runfolder is ready"""
         state = self.get_runfolder_state(directory)
-        self._logger.debug("Checking {0}. state={1}".format(directory, state))
-        return state == RunfolderState.READY
+        from arteria.testhelpers import TestFunctionDelta, BaseRestTest
+        return state == State.READY
 
     def _monitored_directories(self):
         """Lists all directories monitored for new runfolders"""
@@ -227,7 +231,7 @@ class RunfolderService:
 
     def next_runfolder(self):
         """Returns the next available runfolder. Returns None if there is none available."""
-        available = self.list_runfolders(state=RunfolderState.READY)
+        available = self.list_runfolders(state=State.READY)
         try:
             first = available.next()
         except StopIteration:
@@ -238,7 +242,7 @@ class RunfolderService:
         return first
 
     def list_available_runfolders(self):
-        return self.list_runfolders(RunfolderState.READY)
+        return self.list_runfolders(State.READY)
 
     def list_runfolders(self, state):
         """

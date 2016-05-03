@@ -1,7 +1,12 @@
+
+import tornado.web
+
+
 import arteria
+from arteria.web.state import State
 from arteria.web.handlers import BaseRestHandler
 from runfolder.services import *
-import tornado.web
+
 
 
 class BaseRunfolderHandler(BaseRestHandler):
@@ -40,7 +45,7 @@ class ListAvailableRunfoldersHandler(BaseRunfolderHandler):
         def get_runfolders():
             try:
                 # TODO: This list should be paged. The unfiltered list can be large
-                state = self.get_argument("state", RunfolderState.READY)
+                state = self.get_argument("state", State.READY)
                 if state == "*":
                     state = None
                 for runfolder_info in self.runfolder_svc.list_runfolders(state):
@@ -74,8 +79,8 @@ class PickupAvailableRunfolderHandler(BaseRunfolderHandler):
         runfolder_info = self.runfolder_svc.next_runfolder()
         if runfolder_info:
             self.append_runfolder_link(runfolder_info)
-            self.runfolder_svc.set_runfolder_state(runfolder_info.path, RunfolderState.PENDING)
-            runfolder_info.state = RunfolderState.PENDING
+            self.runfolder_svc.set_runfolder_state(runfolder_info.path, State.PENDING)
+            runfolder_info.state = State.PENDING
             self.write_object(runfolder_info)
         else:
             self.write(dict())

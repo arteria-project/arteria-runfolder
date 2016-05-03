@@ -1,12 +1,14 @@
 import unittest
 import time
-from arteria.testhelpers import TestFunctionDelta, BaseRestTest
 import os
 import logging
 import requests
 import jsonpickle
 import mock
 import shutil
+
+from arteria.testhelpers import TestFunctionDelta, BaseRestTest
+from arteria.web.state import State
 
 
 log = logging.getLogger(__name__)
@@ -103,7 +105,7 @@ class RestApiTestCase(BaseRestTest):
         path = self._create_ready_runfolder()
         self.assertTrue(self._exists(path))
         # Mark the folder as processing
-        self.post("./runfolders/path{}".format(path), {"state": "STARTED"}, expect=200)
+        self.post("./runfolders/path{}".format(path), {"state": State.STARTED}, expect=200)
         # Ensure that the folder is not listed anymore:
         self.assertFalse(self._exists(path))
         # Remove the path created, so it does not interfere with other tests
@@ -122,7 +124,7 @@ class RestApiTestCase(BaseRestTest):
         response = self.get("./runfolders/pickup", expect=200)
         response_json = jsonpickle.loads(response.text)
         self.assertEqual(response_json["path"], path)
-        self.assertEqual(response_json["state"], "PENDING")
+        self.assertEqual(response_json["state"], State.PENDING)
         # Remove the path created, so it does not interfere with other tests
         shutil.rmtree(path)
 
@@ -133,7 +135,7 @@ class RestApiTestCase(BaseRestTest):
         response = self.get("./runfolders/next", expect=200)
         response_json = jsonpickle.loads(response.text)
         self.assertEqual(response_json["path"], path)
-        self.assertEqual(response_json["state"], "READY")
+        self.assertEqual(response_json["state"], State.READY)
         # Remove the path created, so it does not interfere with other tests
         shutil.rmtree(path)
 
