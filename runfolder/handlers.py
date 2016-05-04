@@ -82,6 +82,7 @@ class PickupAvailableRunfolderHandler(BaseRunfolderHandler):
             runfolder_info.state = State.PENDING
             self.write_object(runfolder_info)
         else:
+            self.set_status(204, reason="No ready runfolders available.")
             self.write(dict())
 
 
