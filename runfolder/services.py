@@ -4,42 +4,7 @@ import logging
 from runfolder import __version__ as version
 
 from arteria.web.state import State
-
-
-
-class Enum(set):
-    """
-    Defines an enumeration which values are a string representation of the
-    specified attribute, i.e. EnumInstance.VAL1 == "VAL1"
-
-    Usage: EnumInstance = Enum(["VAL1", "VAL2"])
-
-    print EnumInstance.VAL1
-    > "VAL1"
-
-    if "VAL3" not in EnumInstance:
-        raise ...
-    """
-    def __getattr__(self, name):
-        if name.lower() in self or name.upper() in self:
-            return name
-        raise AttributeError
-
-    def __setattr__(self, key, value):
-        raise NotImplementedError("Values cannot be set directly")
-
-"""
-NONE: Not ready for processing or invalid
-READY: Ready for processing
-PENDING: This runfolder has been handed to some other service, and is awaiting having it's status set.
-         It will wait X number of minutes before becoming available again.
-STARTED: Started processing the runfolder
-DONE: Done processing the runfolder
-ERROR: Started processing the runfolder but there was an error
-"""
-RunfolderState = Enum([State.NONE, State.READY, State.PENDING, State.STARTED, State.DONE, State.ERROR])
-
-
+from arteria.web.state import validate_state
 
 class RunfolderInfo:
     """
@@ -197,15 +162,9 @@ class RunfolderService:
         return state
 
     @staticmethod
-    def validate_state(state):
-        """Raises InvalidRunfolderState if the state is not known"""
-        if state not in RunfolderState:
-            raise InvalidRunfolderState("The state '{}' is not valid".format(state))
-
-    @staticmethod
     def set_runfolder_state(runfolder, state):
         """Sets the state of a runfolder"""
-        RunfolderService.validate_state(state)
+        validate_state(state)
         arteria_dir = os.path.join(runfolder, ".arteria")
         state_file = os.path.join(arteria_dir, "state")
         if not os.path.exists(arteria_dir):
@@ -251,7 +210,7 @@ class RunfolderService:
         """
         runfolders = self._enumerate_runfolders()
         if state:
-            RunfolderService.validate_state(state)
+            validate_state(state)
             return (runfolder for runfolder in runfolders if runfolder.state == state)
         else:
             return runfolders

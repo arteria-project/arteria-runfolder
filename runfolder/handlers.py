@@ -4,6 +4,7 @@ import tornado.web
 
 import arteria
 from arteria.web.state import State
+from arteria.exceptions import InvalidArteriaStateException
 from arteria.web.handlers import BaseRestHandler
 from runfolder.services import *
 
@@ -117,7 +118,7 @@ class RunfolderHandler(BaseRunfolderHandler):
 
         try:
             self.runfolder_svc.set_runfolder_state(path, state)
-        except InvalidRunfolderState:
+        except InvalidArteriaStateException:
             raise tornado.web.HTTPError(400, "The state '{}' is not valid".format(state))
 
     @arteria.undocumented

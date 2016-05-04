@@ -1,6 +1,10 @@
 import unittest
 import logging
-from runfolder.services import RunfolderService, RunfolderState
+
+from arteria.web.state import State
+
+from runfolder.services import RunfolderService
+
 
 logger = logging.getLogger(__name__)
 
@@ -56,11 +60,6 @@ class RunfolderServiceTestCase(unittest.TestCase):
         runfolder = runfolder_svc.next_runfolder()
         expected = "ready: /data/testarteria1/mon1/runfolder001@localhost"
         self.assertEqual(str(runfolder), expected)
-
-    def test_runfolder_state_cant_be_set(self):
-        def assign_by_accident():
-            RunfolderState.READY = "by accident"
-        self.assertRaises(NotImplementedError, assign_by_accident)
 
     def test_monitored_directory_validates(self):
         configuration_svc = dict()
