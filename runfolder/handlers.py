@@ -1,14 +1,12 @@
 
 import tornado.web
 
-
 import arteria
 from arteria.web.state import State
 from arteria.exceptions import InvalidArteriaStateException
 from arteria.web.handlers import BaseRestHandler
+
 from runfolder.services import *
-
-
 
 class BaseRunfolderHandler(BaseRestHandler):
     """Provides core logic for all runfolder handlers"""
@@ -62,7 +60,7 @@ class NextAvailableRunfolderHandler(BaseRunfolderHandler):
     """Handles fetching the next available runfolder"""
     def get(self):
         """
-        Returns the next runfolder to process. Note that will not lock the runfolder, and unless it's
+        Returns the next runfolder to process. Note that it will not lock the runfolder, and unless its
         state is changed by the polling client quickly enough it will be presented again.
         """
         runfolder_info = self.runfolder_svc.next_runfolder()
