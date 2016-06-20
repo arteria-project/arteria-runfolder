@@ -1,0 +1,10 @@
+[Unit]
+Description=Microservice for managing runfolders
+
+[Socket]
+ListenStream=10800
+NoDelay=true
+DeferAcceptSec=30
+
+[Install]
+WantedBy=sockets.target

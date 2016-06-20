@@ -1,0 +1,14 @@
+[Unit]
+Description=Microservice for managing runfolders
+After=nginx.service
+
+[Service]
+EnvironmentFile=-/etc/runfolder/runfolder.conf
+User=runfolder
+PIDFile=/var/run/runfolder.pid
+ExecStart=/usr/bin/runfolder-ws --port=${DEFAULTPORT} --config=/etc/runfolder
+Restart=always
+StandardOutput=journal
+
+[Install]
+WantedBy=multi-user.target
