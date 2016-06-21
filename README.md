@@ -4,12 +4,18 @@ Arteria-Runfolder
 A self contained (Tornado) REST service for managing runfolders.
 
 Availabe on COPR. Install with:
+
 dnf copr enable lef/arteria 
+
 dnf install runfolder
+
 (This will pull all required dependencies).
 
+Optionally change DEFAULTPORT in /etc/arteria/runfolder/runfolder.conf
+
 Start with:
-systemctl runfolder start
+
+systemctl start runfolder
 
 **Running the tests**
 After install you could run the integration tests to see if everything works as expected:
