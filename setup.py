@@ -14,7 +14,7 @@ setup(
     author='SNP&SEQ Technology Platform, Uppsala University',
     packages=find_packages(),
     include_package_data=True,
-    data_files=[('/etc/runfolder', ['config/app.config',
+    data_files=[('/etc/arteria/runfolder', ['config/app.config',
                                     'config/logger.config'])],
     entry_points={
         'console_scripts': ['runfolder-ws = runfolder.app:start']

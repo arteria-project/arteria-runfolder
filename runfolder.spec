@@ -2,8 +2,8 @@
 %define version 1.0.1
 %define unmangled_version 1.0.1
 %define unmangled_version 1.0.1
-%define release 1
-%global confdir %{_sysconfdir}/%{name}
+%define release 3
+%global confdir %{_sysconfdir}/arteria/%{name}
 
 Summary: Microservice for managing runfolders
 Name: %{name}
@@ -26,26 +26,14 @@ Requires(preun):  systemd-units
 Requires(postun): systemd-units
 BuildRequires:    systemd-units
 
+Buildrequires: python
+Requires: arteria,python,nginx,python-jsonpickle,python-tornado,PyYAML,python-requests,python-nose,python-mock
+
 %description
 Arteria-Runfolder
 =================
 
 A self contained (Tornado) REST service for managing runfolders.
-
-**Try it out:**
-
-Install using pip:
-
-    pip install -r requirements/dev . # possible add -e if you're in development mode.
-
-Open up the `config/app.config` and specify the root directories that you want to monitor for runfolders. Then run:
-
-    runfolder-ws --port 9999 --configroot config/
-
-This will star the runfolder service on port 9999, and the api dock will be available under `localhost:9999/api`.
-Try curl-ing to see what you can do with it:
-
-    curl localhost:9999/api
 
 **Running the tests**
 After install you could run the integration tests to see if everything works as expected:
@@ -58,11 +46,6 @@ Alternatively, you can run the same script against a remote server, specifying t
 
 Unit tests can be run with
     nosetests ./runfolder_tests/unit
-
-**Install in production**
-One way to install this as a daemon in a production environment
-can be seen at https://github.com/arteria-project/arteria-provisioning
-
 
 %prep
 %setup -n %{name}-%{unmangled_version} -n %{name}-%{unmangled_version}
