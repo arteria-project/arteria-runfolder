@@ -7,7 +7,7 @@ The service will watch a directory structure containing Illumina runfolders,
 and try to determine the state it is in by looking for the `RTAComplete.txt` file
 which pops up once the sequencing is finished.
 
-Currently upported states are:
+Currently supported states are:
 
     NONE    -> No RTAComplete.txt file available
     READY   -> Has found and RTAComplete.txt file
@@ -17,7 +17,7 @@ Currently upported states are:
 
 All states can be set via posting to the API. E.g:
 
-    curl -X POST --data '{"state": "STARTED"}'http://localhost:9999/api/1.0/runfolders/</path/to/my_runfolder>
+    curl -X POST --data '{"state": "STARTED"}' http://localhost:9999/api/1.0/runfolders/</path/to/my_runfolder>
 
 This means that the client (e.g. a workflow) is responsible for updating the state, and determining how to handle it.
 
