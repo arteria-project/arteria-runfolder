@@ -24,6 +24,9 @@ class RunfolderServiceTestCase(unittest.TestCase):
             "monitored_directories": [
                 "/data/testarteria1/mon1",
                 "/data/testarteria1/mon2"
+            ],
+            "completed_marker_files": [
+                "RTAComplete.txt"
             ]
         }
         runfolder_svc = RunfolderService(configuration_svc, logger)
@@ -47,6 +50,9 @@ class RunfolderServiceTestCase(unittest.TestCase):
         configuration_svc = {
             "monitored_directories": [
                 "/data/testarteria1/mon1"
+            ],
+            "completed_marker_files": [
+                "RTAComplete.txt"
             ]
         }
 
