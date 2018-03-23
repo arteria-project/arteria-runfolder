@@ -49,6 +49,7 @@ class RunfolderService:
     def _file_exists(path):
         return os.path.isfile(path)
 
+    @staticmethod
     def _file_exists_and_is_older_than(path, minutes):
         if not os.path.isfile(path):
             return False
