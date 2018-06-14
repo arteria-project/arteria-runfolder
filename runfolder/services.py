@@ -162,8 +162,19 @@ class RunfolderService:
         If the file .arteria/state exists, it will determine the state. If it doesn't
         exist, the existence of the marker file RTAComplete.txt determines the state.
         """
-        completed_marker_files = self._configuration_svc["completed_marker_files"]
-        completed_grace_minutes = self._configuration_svc["completed_marker_grace_minutes"]
+        completed_marker_files = None
+        try:
+            completed_marker_files = self._configuration_svc["completed_marker_file"]
+            if isinstance(completed_marker_files, basestring):
+                completed_marker_files = [completed_marker_files]
+        except KeyError:
+            pass
+        completed_grace_minutes = None
+        try:
+            completed_grace_minutes = self._configuration_svc["completed_marker_grace_minutes"]
+        except KeyError:
+            pass
+
         if completed_grace_minutes is None:
             completed_grace_minutes = 0
         state = self._get_runfolder_state_from_state_file(runfolder)
