@@ -18,6 +18,9 @@ class RunfolderServiceTestCase(unittest.TestCase):
         else:
             raise Exception("Unexpected path")
 
+    def _is_older_wrapper(self, path, age):
+        return self._valid_runfolder(path)
+
     def test_list_available_runfolders(self):
         # Setup
         configuration_svc = {
@@ -30,6 +33,7 @@ class RunfolderServiceTestCase(unittest.TestCase):
         runfolder_svc = RunfolderService(configuration_svc, logger)
 
         runfolder_svc._file_exists = self._valid_runfolder
+        runfolder_svc._file_exists_and_is_older_than = self._is_older_wrapper
         runfolder_svc._subdirectories = lambda path: ["runfolder001"]
         runfolder_svc._host = lambda: "localhost"
 
@@ -55,6 +59,7 @@ class RunfolderServiceTestCase(unittest.TestCase):
         # Since keys in configuration_svc can be directly indexed, we can mock it with a dict:
         runfolder_svc = RunfolderService(configuration_svc, logger)
         runfolder_svc._file_exists = self._valid_runfolder
+        runfolder_svc._file_exists_and_is_older_than = self._is_older_wrapper
         runfolder_svc._subdirectories = lambda path: ["runfolder001"]
         runfolder_svc._host = lambda: "localhost"
 

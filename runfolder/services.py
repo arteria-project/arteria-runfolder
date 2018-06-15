@@ -165,7 +165,7 @@ class RunfolderService:
         completed_marker_files = None
         try:
             completed_marker_files = self._configuration_svc["completed_marker_file"]
-            if isinstance(completed_marker_files, basestring):
+            if isinstance(completed_marker_files, str):
                 completed_marker_files = [completed_marker_files]
         except KeyError:
             raise ConfigurationError("completed_marker_file must be set")
