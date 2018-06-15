@@ -168,7 +168,7 @@ class RunfolderService:
             if isinstance(completed_marker_files, basestring):
                 completed_marker_files = [completed_marker_files]
         except KeyError:
-            pass
+            raise ConfigurationError("completed_marker_file must be set")
         completed_grace_minutes = None
         try:
             completed_grace_minutes = self._configuration_svc["completed_marker_grace_minutes"]
@@ -179,8 +179,6 @@ class RunfolderService:
             completed_grace_minutes = 0
         state = self._get_runfolder_state_from_state_file(runfolder)
         if state == State.NONE:
-            if completed_marker_files is None:
-                raise ConfigurationError("completed_marker_file must be set")
             ready = True
             for marker_file in completed_marker_files:
                 completed_marker = os.path.join(runfolder, marker_file)
