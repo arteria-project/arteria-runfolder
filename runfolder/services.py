@@ -1,6 +1,7 @@
 import os.path
 import socket
 import logging
+import time
 from runfolder import __version__ as version
 
 from arteria.web.state import State
@@ -47,6 +48,14 @@ class RunfolderService:
     @staticmethod
     def _file_exists(path):
         return os.path.isfile(path)
+
+    @staticmethod
+    def _file_exists_and_is_older_than(path, minutes):
+        if not os.path.isfile(path):
+            return False
+
+        modification_time = os.path.getmtime(path)
+        return (time.time() - modification_time) >= minutes * 60
 
     @staticmethod
     def _dir_exists(path):
@@ -153,13 +162,28 @@ class RunfolderService:
         If the file .arteria/state exists, it will determine the state. If it doesn't
         exist, the existence of the marker file RTAComplete.txt determines the state.
         """
-        completed_marker_file = self._configuration_svc["completed_marker_file"]
+        completed_marker_files = None
+        try:
+            completed_marker_files = self._configuration_svc["completed_marker_file"]
+            if isinstance(completed_marker_files, str):
+                completed_marker_files = [completed_marker_files]
+        except KeyError:
+            raise ConfigurationError("completed_marker_file must be set")
+        completed_grace_minutes = None
+        try:
+            completed_grace_minutes = self._configuration_svc["completed_marker_grace_minutes"]
+        except KeyError:
+            pass
+
+        if completed_grace_minutes is None:
+            completed_grace_minutes = 0
         state = self._get_runfolder_state_from_state_file(runfolder)
         if state == State.NONE:
-            if completed_marker_file is None:
-                raise ConfigurationError("completed_marker_file must be set")
-            completed_marker = os.path.join(runfolder, completed_marker_file)
-            ready = self._file_exists(completed_marker)
+            ready = True
+            for marker_file in completed_marker_files:
+                completed_marker = os.path.join(runfolder, marker_file)
+                if not self._file_exists_and_is_older_than(completed_marker, completed_grace_minutes):
+                    ready = False
             if ready:
                 state = State.READY
         return state
