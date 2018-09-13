@@ -66,7 +66,10 @@ class NextAvailableRunfolderHandler(BaseRunfolderHandler):
         runfolder_info = self.runfolder_svc.next_runfolder()
         if runfolder_info:
             self.append_runfolder_link(runfolder_info)
-        self.write_object(runfolder_info)
+            self.write_object(runfolder_info)
+        else:
+            self.set_status(204, reason="No ready runfolder available.")
+            self.write(dict())
 
 
 class PickupAvailableRunfolderHandler(BaseRunfolderHandler):

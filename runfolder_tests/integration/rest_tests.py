@@ -139,6 +139,10 @@ class RestApiTestCase(BaseRestTest):
         # Remove the path created, so it does not interfere with other tests
         shutil.rmtree(path)
 
+    def test_call_next_without_ready_runfolder(self):
+        # Status code 204 is no content.
+        response = self.get("./runfolders/next", expect=204)
+
     def _exists(self, path):
         resp = self.get("./runfolders")
         runfolders = resp.body_obj["runfolders"]
