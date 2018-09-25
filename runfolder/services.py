@@ -202,7 +202,6 @@ class RunfolderService:
     def is_runfolder_ready(self, directory):
         """Returns True if the runfolder is ready"""
         state = self.get_runfolder_state(directory)
-        from arteria.testhelpers import TestFunctionDelta, BaseRestTest
         return state == State.READY
 
     def _monitored_directories(self):
