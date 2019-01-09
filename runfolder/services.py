@@ -2,7 +2,6 @@ import os.path
 import socket
 import logging
 import time
-import json
 import xmltodict
 from runfolder import __version__ as version
 
