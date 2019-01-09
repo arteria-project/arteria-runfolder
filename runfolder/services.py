@@ -2,6 +2,8 @@ import os.path
 import socket
 import logging
 import time
+import json
+import xmltodict
 from runfolder import __version__ as version
 
 from arteria.web.state import State
@@ -12,7 +14,7 @@ class RunfolderInfo:
     Information about a runfolder. Status must be defined in RunfolderState:
     """
 
-    def __init__(self, host, path, state):
+    def __init__(self, host, path, state, reagent_kit_barcode):
         """
         Initializes the object
 
@@ -25,6 +27,7 @@ class RunfolderInfo:
         self.path = path
         self.state = state
         self.service_version = version
+        self.reagent_kit_barcode = reagent_kit_barcode
 
     def __repr__(self):
         return "{0}: {1}@{2}".format(self.state, self.path, self.host)
@@ -137,7 +140,7 @@ class RunfolderService:
 
         if not self._dir_exists(path):
             raise DirectoryDoesNotExist("Directory does not exist: '{0}'".format(path))
-        info = RunfolderInfo(self._host(), path, self.get_runfolder_state(path))
+        info = RunfolderInfo(self._host(), path, self.get_runfolder_state(path), self.get_reagent_kit_barcode(path))
         return info
 
     def _get_runfolder_state_from_state_file(self, runfolder):
@@ -257,6 +260,30 @@ class RunfolderService:
         if not self._configuration_svc[config_key]:
             raise ActionNotEnabled("The action {0} is not enabled".format(config_key))
 
+    def get_reagent_kit_barcode(self, path):
+        run_parameters = self.read_run_parameters(path)
+        try:
+            barcode = run_parameters['RunParameters']['ReagentKitBarcode']
+        except KeyError:
+            # Reagent kit barcode is not available for all run types,
+            # it is therefore expected to not be found in all cases
+            self._logger.info("Reagent kit barcode not found")
+            barcode = None
+        return barcode
+
+    def read_run_parameters(self, path):
+        alt_1 = os.path.join(path, "runParameters.xml")
+        alt_2 = os.path.join(path, "RunParameters.xml")
+        if os.path.exists(alt_1):
+            with open(alt_1) as f:
+                return xmltodict.parse(f.read())
+        elif os.path.exists(alt_2):
+            with open(alt_2) as f:
+                return xmltodict.parse(f.read())
+        else:
+            raise RunParametersNotFound(
+                    "Could not find [Rr]unParameters at {}".format(path))
+
 
 class CannotOverrideFile(Exception):
     pass
@@ -283,5 +310,9 @@ class InvalidRunfolderState(Exception):
 
 
 class ConfigurationError(Exception):
+    pass
+
+
+class RunParametersNotFound(Exception):
     pass
 
