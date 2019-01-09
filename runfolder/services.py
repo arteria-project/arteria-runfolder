@@ -103,6 +103,20 @@ class RunfolderService:
         os.makedirs(path)
         self._logger.info(
             "Created a runfolder at {0} - intended for tests only".format(path))
+        runparameters_path = os.path.join(path, "runParameters.xml")
+        if os.path.isfile(runparameters_path):
+            raise CannotOverrideFile("runParameters.xml already exists at {0}".format(runparameters_path))
+
+        with open(runparameters_path, 'w') as file:
+            file.write('<?xml version="1.0"?>')
+            file.write('<RunParameters>')
+            file.write('  <ReagentKitBarcode>AB1234567-123V1</ReagentKitBarcode>')
+            file.write('</RunParameters>')
+            file.close()
+
+        self._logger.info(
+            "Added 'runParameters.xml' to '{0}' - intended for tests only".format(runparameters_path))
+
 
     def add_sequencing_finished_marker(self, path):
         """
@@ -252,7 +266,7 @@ class RunfolderService:
                 directory = os.path.join(monitored_root, subdir)
                 self._logger.debug("Found potential runfolder {0}".format(directory))
                 state = self.get_runfolder_state(directory)
-                info = RunfolderInfo(self._host(), directory, state)
+                info = RunfolderInfo(self._host(), directory, state, self.get_reagent_kit_barcode(directory))
                 yield info
 
     def _requires_enabled(self, config_key):

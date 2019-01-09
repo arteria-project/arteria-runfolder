@@ -1,9 +1,11 @@
 import unittest
 import logging
+import mock
 
 from arteria.web.state import State
 
 from runfolder.services import RunfolderService
+from runfolder.services import RunParametersNotFound
 
 
 logger = logging.getLogger(__name__)
@@ -38,14 +40,15 @@ class RunfolderServiceTestCase(unittest.TestCase):
         runfolder_svc._host = lambda: "localhost"
 
         # Test
-        runfolders = runfolder_svc.list_available_runfolders()
-        runfolders = list(runfolders)
-        self.assertEqual(len(runfolders), 2)
+        with mock.patch.object(RunfolderService, 'get_reagent_kit_barcode', return_value = None):
+            runfolders = runfolder_svc.list_available_runfolders()
+            runfolders = list(runfolders)
+            self.assertEqual(len(runfolders), 2)
 
-        runfolders_str = sorted([str(runfolder) for runfolder in runfolders])
-        expected = ["ready: /data/testarteria1/mon1/runfolder001@localhost",
+            runfolders_str = sorted([str(runfolder) for runfolder in runfolders])
+            expected = ["ready: /data/testarteria1/mon1/runfolder001@localhost",
                     "ready: /data/testarteria1/mon2/runfolder001@localhost"]
-        self.assertEqual(runfolders_str, expected)
+            self.assertEqual(runfolders_str, expected)
 
     def test_next_runfolder(self):
         # Setup
@@ -64,9 +67,10 @@ class RunfolderServiceTestCase(unittest.TestCase):
         runfolder_svc._host = lambda: "localhost"
 
         # Test
-        runfolder = runfolder_svc.next_runfolder()
-        expected = "ready: /data/testarteria1/mon1/runfolder001@localhost"
-        self.assertEqual(str(runfolder), expected)
+        with mock.patch.object(RunfolderService, 'get_reagent_kit_barcode', return_value = None):
+            runfolder = runfolder_svc.next_runfolder()
+            expected = "ready: /data/testarteria1/mon1/runfolder001@localhost"
+            self.assertEqual(str(runfolder), expected)
 
     def test_monitored_directory_validates(self):
         configuration_svc = dict()
@@ -81,6 +85,38 @@ class RunfolderServiceTestCase(unittest.TestCase):
         configuration_svc["monitored_directories"] = ["/data/testarteria1/runfolders/"]
         runfolder_svc._validate_is_being_monitored(runfolder)
 
+    def test_get_reagent_kit_barcode_barcode_found(self):
+        # Setup
+        configuration_svc = dict()
+        configuration_svc["monitored_directories"] = ["/data/testarteria1/runfolders"]
+        runfolder_svc = RunfolderService(configuration_svc, logger)
+        runparameters_dict = {'RunParameters': {'ReagentKitBarcode': 'ABC-123'}}
+
+        # Test
+        with mock.patch.object(RunfolderService, 'read_run_parameters', return_value = runparameters_dict):
+            self.assertEqual(runfolder_svc.get_reagent_kit_barcode('/path/to/runfolder/'), 'ABC-123')
+
+    def test_get_reagent_kit_barcode_barcode_not_found(self):
+        # Setup
+        configuration_svc = dict()
+        configuration_svc["monitored_directories"] = ["/data/testarteria1/runfolders"]
+        runfolder_svc = RunfolderService(configuration_svc, logger)
+        runparameters_dict = {'RunParameters': {'OtherLabel': 'ABC-123'}}
+
+        # Test
+        with mock.patch.object(RunfolderService, 'read_run_parameters', return_value = runparameters_dict):
+            self.assertEqual(runfolder_svc.get_reagent_kit_barcode('/path/to/runfolder/'), None)
+
+    def test_runparameters_not_found(self):
+        # Setup
+        configuration_svc = dict()
+        configuration_svc["monitored_directories"] = ["/data/testarteria1/runfolders"]
+        runfolder_svc = RunfolderService(configuration_svc, logger)
+
+        # Test
+        with mock.patch('os.path.exists', return_value = False):
+            with self.assertRaises(RunParametersNotFound):
+                runfolder_svc.read_run_parameters('/path/to/runfolder/')
 
 if __name__ == '__main__':
     unittest.main()
