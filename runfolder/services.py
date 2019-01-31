@@ -13,7 +13,7 @@ class RunfolderInfo:
     Information about a runfolder. Status must be defined in RunfolderState:
     """
 
-    def __init__(self, host, path, state, reagent_kit_barcode):
+    def __init__(self, host, path, state, metadata):
         """
         Initializes the object
 
@@ -26,7 +26,10 @@ class RunfolderInfo:
         self.path = path
         self.state = state
         self.service_version = version
-        self.reagent_kit_barcode = reagent_kit_barcode
+        if metadata:
+            self.metadata = metadata
+        else:
+            self.metadata = {}
 
     def __repr__(self):
         return "{0}: {1}@{2}".format(self.state, self.path, self.host)
@@ -160,7 +163,8 @@ class RunfolderService:
 
         if not self._dir_exists(path):
             raise DirectoryDoesNotExist("Directory does not exist: '{0}'".format(path))
-        info = RunfolderInfo(self._host(), path, self.get_runfolder_state(path), self.get_reagent_kit_barcode(path))
+        info = RunfolderInfo(self._host(), path, self.get_runfolder_state(path),
+                                self.get_metadata(path))
         return info
 
     def _get_runfolder_state_from_state_file(self, runfolder):
@@ -272,7 +276,8 @@ class RunfolderService:
                 directory = os.path.join(monitored_root, subdir)
                 self._logger.debug("Found potential runfolder {0}".format(directory))
                 state = self.get_runfolder_state(directory)
-                info = RunfolderInfo(self._host(), directory, state, self.get_reagent_kit_barcode(directory))
+                info = RunfolderInfo(self._host(), directory, state,
+                                     self.get_metadata(directory))
                 yield info
 
     def _requires_enabled(self, config_key):
@@ -280,14 +285,40 @@ class RunfolderService:
         if not self._configuration_svc[config_key]:
             raise ActionNotEnabled("The action {0} is not enabled".format(config_key))
 
-    def get_reagent_kit_barcode(self, path):
+    def get_metadata(self, path):
         run_parameters = self.read_run_parameters(path)
+        reagent_kit_barcode = self.get_reagent_kit_barcode(path, run_parameters)
+        library_tube_barcode = self.get_library_tube_barcode(path, run_parameters)
+        metadata = {}
+        if reagent_kit_barcode:
+            metadata['reagent_kit_barcode'] = reagent_kit_barcode
+        if library_tube_barcode:
+            metadata['library_tube_barcode'] = library_tube_barcode
+        return metadata
+
+    def get_reagent_kit_barcode(self, path, run_parameters):
         try:
             barcode = run_parameters['RunParameters']['ReagentKitBarcode']
         except KeyError:
             # Reagent kit barcode is not available for all run types,
             # it is therefore expected to not be found in all cases
-            self._logger.info("Reagent kit barcode not found")
+            self._logger.debug("Reagent kit barcode not found")
+            barcode = None
+        except TypeError:
+            self._logger.debug("[Rr]unParameters.xml not found")
+            barcode = None
+        return barcode
+
+    def get_library_tube_barcode(self, path, run_parameters):
+        try:
+            barcode = run_parameters['RunParameters']['RfidsInfo']['LibraryTubeSerialBarcode']
+        except KeyError:
+            # Library tube barcode is not available for all run types,
+            # it is therefore expected to not be found in all cases
+            self._logger.debug("Library tube barcode not found")
+            barcode = None
+        except TypeError:
+            self._logger.debug("[Rr]unParameters.xml not found")
             barcode = None
         return barcode
 
@@ -301,9 +332,7 @@ class RunfolderService:
             with open(alt_2) as f:
                 return xmltodict.parse(f.read())
         else:
-            raise RunParametersNotFound(
-                    "Could not find [Rr]unParameters at {}".format(path))
-
+            return None
 
 class CannotOverrideFile(Exception):
     pass
@@ -331,8 +360,3 @@ class InvalidRunfolderState(Exception):
 
 class ConfigurationError(Exception):
     pass
-
-
-class RunParametersNotFound(Exception):
-    pass
-
