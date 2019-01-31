@@ -106,12 +106,19 @@ class RunfolderService:
         if os.path.isfile(runparameters_path):
             raise CannotOverrideFile("runParameters.xml already exists at {0}".format(runparameters_path))
 
-        with open(runparameters_path, 'w') as file:
-            file.write('<?xml version="1.0"?>')
-            file.write('<RunParameters>')
-            file.write('  <ReagentKitBarcode>AB1234567-123V1</ReagentKitBarcode>')
-            file.write('</RunParameters>')
-            file.close()
+        runparameters_dict = {
+                'RunParameters': {
+                        'ReagentKitBarcode': 'AB1234567-123V1',
+                        'RfidsInfo': {
+                                'LibraryTubeSerialBarcode': 'NV0012345-LIB'
+                            }
+                    }
+            }
+
+        output_xml = xmltodict.unparse(runparameters_dict, pretty=True)
+
+        with open(runparameters_path, 'a') as f:
+            f.write(output_xml)
 
         self._logger.info(
             "Added 'runParameters.xml' to '{0}' - intended for tests only".format(runparameters_path))
