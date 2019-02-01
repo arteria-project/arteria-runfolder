@@ -2,6 +2,7 @@ import os.path
 import socket
 import logging
 import time
+import xmltodict
 from runfolder import __version__ as version
 
 from arteria.web.state import State
@@ -12,7 +13,7 @@ class RunfolderInfo:
     Information about a runfolder. Status must be defined in RunfolderState:
     """
 
-    def __init__(self, host, path, state):
+    def __init__(self, host, path, state, metadata):
         """
         Initializes the object
 
@@ -25,6 +26,7 @@ class RunfolderInfo:
         self.path = path
         self.state = state
         self.service_version = version
+        self.metadata = metadata
 
     def __repr__(self):
         return "{0}: {1}@{2}".format(self.state, self.path, self.host)
@@ -100,6 +102,27 @@ class RunfolderService:
         os.makedirs(path)
         self._logger.info(
             "Created a runfolder at {0} - intended for tests only".format(path))
+        runparameters_path = os.path.join(path, "runParameters.xml")
+        if os.path.isfile(runparameters_path):
+            raise CannotOverrideFile("runParameters.xml already exists at {0}".format(runparameters_path))
+
+        runparameters_dict = {
+                'RunParameters': {
+                        'ReagentKitBarcode': 'AB1234567-123V1',
+                        'RfidsInfo': {
+                                'LibraryTubeSerialBarcode': 'NV0012345-LIB'
+                            }
+                    }
+            }
+
+        output_xml = xmltodict.unparse(runparameters_dict, pretty=True)
+
+        with open(runparameters_path, 'a') as f:
+            f.write(output_xml)
+
+        self._logger.info(
+            "Added 'runParameters.xml' to '{0}' - intended for tests only".format(runparameters_path))
+
 
     def add_sequencing_finished_marker(self, path):
         """
@@ -137,7 +160,8 @@ class RunfolderService:
 
         if not self._dir_exists(path):
             raise DirectoryDoesNotExist("Directory does not exist: '{0}'".format(path))
-        info = RunfolderInfo(self._host(), path, self.get_runfolder_state(path))
+        info = RunfolderInfo(self._host(), path, self.get_runfolder_state(path),
+                             self.get_metadata(path))
         return info
 
     def _get_runfolder_state_from_state_file(self, runfolder):
@@ -249,7 +273,8 @@ class RunfolderService:
                 directory = os.path.join(monitored_root, subdir)
                 self._logger.debug("Found potential runfolder {0}".format(directory))
                 state = self.get_runfolder_state(directory)
-                info = RunfolderInfo(self._host(), directory, state)
+                info = RunfolderInfo(self._host(), directory, state,
+                                     self.get_metadata(directory))
                 yield info
 
     def _requires_enabled(self, config_key):
@@ -257,6 +282,54 @@ class RunfolderService:
         if not self._configuration_svc[config_key]:
             raise ActionNotEnabled("The action {0} is not enabled".format(config_key))
 
+    def get_metadata(self, path):
+        run_parameters = self.read_run_parameters(path)
+        reagent_kit_barcode = self.get_reagent_kit_barcode(path, run_parameters)
+        library_tube_barcode = self.get_library_tube_barcode(path, run_parameters)
+        metadata = {}
+        if reagent_kit_barcode:
+            metadata['reagent_kit_barcode'] = reagent_kit_barcode
+        if library_tube_barcode:
+            metadata['library_tube_barcode'] = library_tube_barcode
+        return metadata
+
+    def get_reagent_kit_barcode(self, path, run_parameters):
+        try:
+            barcode = run_parameters['RunParameters']['ReagentKitBarcode']
+        except KeyError:
+            # Reagent kit barcode is not available for all run types,
+            # it is therefore expected to not be found in all cases
+            self._logger.debug("Reagent kit barcode not found")
+            return None
+        except TypeError:
+            self._logger.debug("[Rr]unParameters.xml not found")
+            return None
+        return barcode
+
+    def get_library_tube_barcode(self, path, run_parameters):
+        try:
+            barcode = run_parameters['RunParameters']['RfidsInfo']['LibraryTubeSerialBarcode']
+        except KeyError:
+            # Library tube barcode is not available for all run types,
+            # it is therefore expected to not be found in all cases
+            self._logger.debug("Library tube barcode not found")
+            return None
+        except TypeError:
+            self._logger.debug("[Rr]unParameters.xml not found")
+            return None
+        return barcode
+
+    def read_run_parameters(self, path):
+        alt_1 = os.path.join(path, "runParameters.xml")
+        alt_2 = os.path.join(path, "RunParameters.xml")
+        if os.path.exists(alt_1):
+            with open(alt_1) as f:
+                return xmltodict.parse(f.read())
+        elif os.path.exists(alt_2):
+            with open(alt_2) as f:
+                return xmltodict.parse(f.read())
+        else:
+            return None
 
 class CannotOverrideFile(Exception):
     pass
@@ -284,4 +357,3 @@ class InvalidRunfolderState(Exception):
 
 class ConfigurationError(Exception):
     pass
-

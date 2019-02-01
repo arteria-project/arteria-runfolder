@@ -1,5 +1,6 @@
 import unittest
 import logging
+import mock
 
 from arteria.web.state import State
 
@@ -81,6 +82,71 @@ class RunfolderServiceTestCase(unittest.TestCase):
         configuration_svc["monitored_directories"] = ["/data/testarteria1/runfolders/"]
         runfolder_svc._validate_is_being_monitored(runfolder)
 
+    def test_get_reagent_kit_barcode_found(self):
+        # Setup
+        configuration_svc = dict()
+        configuration_svc["monitored_directories"] = ["/data/testarteria1/runfolders"]
+        runfolder_svc = RunfolderService(configuration_svc, logger)
+        runparameters_dict = {'RunParameters': {'ReagentKitBarcode': 'ABC-123'}}
+
+        # Test
+        self.assertEqual(runfolder_svc.get_reagent_kit_barcode('/path/to/runfolder/', runparameters_dict), 'ABC-123')
+
+    def test_get_reagent_kit_barcode_not_found(self):
+        # Setup
+        configuration_svc = dict()
+        configuration_svc["monitored_directories"] = ["/data/testarteria1/runfolders"]
+        runfolder_svc = RunfolderService(configuration_svc, logger)
+        runparameters_dict = {'RunParameters': {'OtherLabel': 'ABC-123'}}
+
+        # Test
+        self.assertEqual(runfolder_svc.get_reagent_kit_barcode('/path/to/runfolder/', runparameters_dict), None)
+
+    def test_get_library_tube_barcode_found(self):
+        # Setup
+        configuration_svc = dict()
+        configuration_svc["monitored_directories"] = ["/data/testarteria1/runfolders"]
+        runfolder_svc = RunfolderService(configuration_svc, logger)
+        runparameters_dict = {'RunParameters': {'RfidsInfo': {'LibraryTubeSerialBarcode': 'NV0012345-LIB'}}}
+
+        # Test
+        self.assertEqual(runfolder_svc.get_library_tube_barcode('/path/to/runfolder/', runparameters_dict), 'NV0012345-LIB')
+
+    def test_get_library_tube_barcode_not_found(self):
+        # Setup
+        configuration_svc = dict()
+        configuration_svc["monitored_directories"] = ["/data/testarteria1/runfolders"]
+        runfolder_svc = RunfolderService(configuration_svc, logger)
+        runparameters_dict = {'RunParameters': {'OtherLabel': 'ABC-123'}}
+
+        # Test
+        self.assertEqual(runfolder_svc.get_library_tube_barcode('/path/to/runfolder/', runparameters_dict), None)
+
+    def test_get_metadata_values_found(self):
+        # Setup
+        configuration_svc = dict()
+        configuration_svc["monitored_directories"] = ["/data/testarteria1/runfolders"]
+        runfolder_svc = RunfolderService(configuration_svc, logger)
+        runparameters_dict = {'RunParameters': { 'ReagentKitBarcode': 'ABC-123',
+                                                 'RfidsInfo': {'LibraryTubeSerialBarcode': 'NV0012345-LIB'}}}
+
+        # Test
+        with mock.patch.object(RunfolderService, 'read_run_parameters', return_value = runparameters_dict):
+            metadata_dict = runfolder_svc.get_metadata('/path/to/runfolder/')
+            self.assertEqual(metadata_dict['reagent_kit_barcode'], 'ABC-123')
+            self.assertEqual(metadata_dict['library_tube_barcode'], 'NV0012345-LIB')
+
+    def test_get_metadata_values_not_found(self):
+        # Setup
+        configuration_svc = dict()
+        configuration_svc["monitored_directories"] = ["/data/testarteria1/runfolders"]
+        runfolder_svc = RunfolderService(configuration_svc, logger)
+        runparameters_dict = {'RunParameters': {'OtherLabel': 'ABC-123'}}
+
+        # Test
+        with mock.patch.object(RunfolderService, 'read_run_parameters', return_value = runparameters_dict):
+            metadata_dict = runfolder_svc.get_metadata('/path/to/runfolder/')
+            self.assertEqual(metadata_dict, {})
 
 if __name__ == '__main__':
     unittest.main()

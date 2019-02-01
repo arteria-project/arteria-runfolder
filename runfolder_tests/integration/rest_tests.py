@@ -139,6 +139,16 @@ class RestApiTestCase(BaseRestTest):
         # Remove the path created, so it does not interfere with other tests
         shutil.rmtree(path)
 
+    def test_metadata_in_runfolder_info(self):
+        path = self._create_ready_runfolder()
+        self.assertTrue(self._exists(path))
+        response = self.get("./runfolders/path{}".format(path), expect=200)
+        response_json = jsonpickle.loads(response.text)
+        self.assertEqual(response_json["metadata"]["reagent_kit_barcode"], 'AB1234567-123V1')
+        self.assertEqual(response_json["metadata"]["library_tube_barcode"], 'NV0012345-LIB')
+        # Remove the path created, so it does not interfere with other tests
+        shutil.rmtree(path)
+
     def test_call_next_without_ready_runfolder(self):
         # Status code 204 is no content.
         response = self.get("./runfolders/next", expect=204)
