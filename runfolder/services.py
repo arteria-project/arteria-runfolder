@@ -26,10 +26,7 @@ class RunfolderInfo:
         self.path = path
         self.state = state
         self.service_version = version
-        if metadata:
-            self.metadata = metadata
-        else:
-            self.metadata = {}
+        self.metadata = metadata
 
     def __repr__(self):
         return "{0}: {1}@{2}".format(self.state, self.path, self.host)
@@ -164,7 +161,7 @@ class RunfolderService:
         if not self._dir_exists(path):
             raise DirectoryDoesNotExist("Directory does not exist: '{0}'".format(path))
         info = RunfolderInfo(self._host(), path, self.get_runfolder_state(path),
-                                self.get_metadata(path))
+                             self.get_metadata(path))
         return info
 
     def _get_runfolder_state_from_state_file(self, runfolder):
@@ -303,10 +300,10 @@ class RunfolderService:
             # Reagent kit barcode is not available for all run types,
             # it is therefore expected to not be found in all cases
             self._logger.debug("Reagent kit barcode not found")
-            barcode = None
+            return None
         except TypeError:
             self._logger.debug("[Rr]unParameters.xml not found")
-            barcode = None
+            return None
         return barcode
 
     def get_library_tube_barcode(self, path, run_parameters):
@@ -316,10 +313,10 @@ class RunfolderService:
             # Library tube barcode is not available for all run types,
             # it is therefore expected to not be found in all cases
             self._logger.debug("Library tube barcode not found")
-            barcode = None
+            return None
         except TypeError:
             self._logger.debug("[Rr]unParameters.xml not found")
-            barcode = None
+            return None
         return barcode
 
     def read_run_parameters(self, path):

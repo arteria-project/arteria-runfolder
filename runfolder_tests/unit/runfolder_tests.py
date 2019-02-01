@@ -45,7 +45,7 @@ class RunfolderServiceTestCase(unittest.TestCase):
 
         runfolders_str = sorted([str(runfolder) for runfolder in runfolders])
         expected = ["ready: /data/testarteria1/mon1/runfolder001@localhost",
-                "ready: /data/testarteria1/mon2/runfolder001@localhost"]
+                    "ready: /data/testarteria1/mon2/runfolder001@localhost"]
         self.assertEqual(runfolders_str, expected)
 
     def test_next_runfolder(self):
