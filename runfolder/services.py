@@ -7,6 +7,7 @@ from runfolder import __version__ as version
 
 from arteria.web.state import State
 from arteria.web.state import validate_state
+from runfolder.lib.instrument import InstrumentFactory
 
 class RunfolderInfo:
     """
@@ -111,7 +112,8 @@ class RunfolderService:
                         'ReagentKitBarcode': 'AB1234567-123V1',
                         'RfidsInfo': {
                                 'LibraryTubeSerialBarcode': 'NV0012345-LIB'
-                            }
+                            },
+                        'ScannerID': 'M04499'
                     }
             }
 
@@ -186,13 +188,8 @@ class RunfolderService:
         If the file .arteria/state exists, it will determine the state. If it doesn't
         exist, the existence of the marker file RTAComplete.txt determines the state.
         """
-        completed_marker_files = None
-        try:
-            completed_marker_files = self._configuration_svc["completed_marker_file"]
-            if isinstance(completed_marker_files, str):
-                completed_marker_files = [completed_marker_files]
-        except KeyError:
-            raise ConfigurationError("completed_marker_file must be set")
+        instrument = InstrumentFactory.get_instrument(self.read_run_parameters(runfolder))
+        completed_marker_file = instrument.completed_marker_file()
         completed_grace_minutes = None
         try:
             completed_grace_minutes = self._configuration_svc["completed_marker_grace_minutes"]
@@ -204,10 +201,9 @@ class RunfolderService:
         state = self._get_runfolder_state_from_state_file(runfolder)
         if state == State.NONE:
             ready = True
-            for marker_file in completed_marker_files:
-                completed_marker = os.path.join(runfolder, marker_file)
-                if not self._file_exists_and_is_older_than(completed_marker, completed_grace_minutes):
-                    ready = False
+            completed_marker = os.path.join(runfolder, completed_marker_file)
+            if not self._file_exists_and_is_older_than(completed_marker, completed_grace_minutes):
+                ready = False
             if ready:
                 state = State.READY
         return state
@@ -292,6 +288,7 @@ class RunfolderService:
         if library_tube_barcode:
             metadata['library_tube_barcode'] = library_tube_barcode
         return metadata
+
 
     def get_reagent_kit_barcode(self, path, run_parameters):
         try:
