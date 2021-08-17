@@ -18,7 +18,7 @@ class InstrumentFactory():
 
         # Other instrument id's are at the top level of RunParameters
         for key in ["InstrumentName", "InstrumentId", "ScannerID"]:
-            if key in run_parameters.viewkeys():
+            if key in run_parameters.keys():
                 return run_parameters.get(key)
 
     @staticmethod

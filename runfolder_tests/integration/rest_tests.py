@@ -45,7 +45,7 @@ class RestApiTestCase(BaseRestTest):
     def setUp(self):
         def line_count(path):
             count = 0
-            for _ in open(path).xreadlines():
+            for _ in open(path):
                 count += 1
             return count
 

@@ -238,7 +238,7 @@ class RunfolderService:
         """Returns the next available runfolder. Returns None if there is none available."""
         available = self.list_runfolders(state=State.READY)
         try:
-            first = available.next()
+            first = next(available)
         except StopIteration:
             first = None
 
