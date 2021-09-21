@@ -24,7 +24,7 @@ class IntegrationTestHelper:
 
     def wait_for_listening(self, port):
         while not self.is_listening(port):
-            print "waiting"
+            print("waiting")
             time.sleep(0.1)
 
 
@@ -67,10 +67,10 @@ def setup_local_server(port, directory):
 
     old_dir = os.getcwd()
     os.chdir(directory)
-    print "Running server locally on port {}, from dir {}".format(port, directory)
+    print("Running server locally on port {}, from dir {}".format(port, directory))
     service = execute(["runfolder-ws", "--port", str(port), "--debug", "--configroot", "."])
 
-    print "Waiting for process to start listening on port {}".format(port)
+    print("Waiting for process to start listening on port {}".format(port))
     helper = IntegrationTestHelper()
     helper.wait_for_listening(port)
     os.chdir(old_dir)
@@ -94,7 +94,7 @@ def run_integration_tests(url, runfolder_directory, log_file_path):
     integration_root = os.path.join(directory, "integration")
     tests_process = subprocess.Popen(["nosetests", integration_root])
     tests_process.wait()
-    print "Tests have finished running"
+    print("Tests have finished running")
 
 
 def run_integration_tests_locally():
@@ -110,7 +110,7 @@ def run_integration_tests_locally():
         run_integration_tests(url, runfolder_directory, log_file_path)
     finally:
         if local_server is not None:
-            print "Terminating the locally running web service"
+            print("Terminating the locally running web service")
             local_server.terminate()
 
 if __name__ == "__main__":

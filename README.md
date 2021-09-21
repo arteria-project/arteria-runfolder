@@ -24,7 +24,7 @@ This means that the client (e.g. a workflow) is responsible for updating the sta
 **Try it out:**
 
     # create venv
-    virtualenv -p python2.7 venv/   
+    virtualenv -p python3.9 venv/   
 
     # activate venv
     source venv/bin/activate
