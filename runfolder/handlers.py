@@ -1,3 +1,4 @@
+import sys
 
 import tornado.web
 
@@ -122,6 +123,9 @@ class RunfolderHandler(BaseRunfolderHandler):
             self.runfolder_svc.set_runfolder_state(path, state)
         except InvalidArteriaStateException:
             raise tornado.web.HTTPError(400, "The state '{}' is not valid".format(state))
+        except DirectoryDoesNotExist:
+            raise tornado.web.HTTPError(404, "Runfolder '{0}' does not exist".format(path))
+
 
     @arteria.undocumented
     def put(self, path):

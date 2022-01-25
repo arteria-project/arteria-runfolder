@@ -210,12 +210,22 @@ class RunfolderService:
 
     @staticmethod
     def set_runfolder_state(runfolder, state):
-        """Sets the state of a runfolder"""
+        """
+        Sets the state of a runfolder
+
+        :raises DirectoryDoesNotExist
+        """
         validate_state(state)
         arteria_dir = os.path.join(runfolder, ".arteria")
         state_file = os.path.join(arteria_dir, "state")
+
+        if not os.path.exists(runfolder):
+            raise DirectoryDoesNotExist(
+                    "Directory does not exist: '{0}'".format(runfolder))
+
         if not os.path.exists(arteria_dir):
             os.makedirs(arteria_dir)
+
         with open(state_file, 'w') as f:
             f.write(state)
 
