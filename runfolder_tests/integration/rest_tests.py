@@ -118,6 +118,12 @@ class RestApiTestCase(BaseRestTest):
         # Remove the path created, so it does not interfere with other tests
         shutil.rmtree(path)
 
+    def test_set_state_raises_exception(self):
+        path = self._create_ready_runfolder()
+        self.assertTrue(self._exists(path))
+        shutil.rmtree(path)
+        self.post("./runfolders/path{}".format(path), {"state": State.STARTED}, expect=404)
+
     def test_pickup_runfolder(self):
         path = self._create_ready_runfolder()
         self.assertTrue(self._exists(path))
