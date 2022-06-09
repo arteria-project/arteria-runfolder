@@ -21,16 +21,18 @@ All states can be set via posting to the API. E.g:
 
 This means that the client (e.g. a workflow) is responsible for updating the state, and determining how to handle it.
 
-**Try it out:**
+**Installation**
 
     # create venv
-    virtualenv -p python3.9 venv/   
+    python3 -m venv venv  
 
     # activate venv
     source venv/bin/activate
 
     # install dependencies
     pip install -e . -r ./requirements/dev
+
+**Running the service**
 
 Open up the `config/app.config` and specify the root directories that you want to monitor for runfolders. Then run:
 
@@ -43,6 +45,7 @@ Try curl-ing to see what you can do with it:
     curl localhost:9999/api
 
 **Running the tests**
+
 After install you could run the integration tests to see if everything works as expected:
 
     ./runfolder_tests/run_integration_tests.py

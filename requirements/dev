@@ -1,5 +1,5 @@
 -r prod
 nose==1.3.7
 nose-watch==0.9.1
-requests==2.7.0
+requests==2.20.0
 mock==1.3.0
