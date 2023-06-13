@@ -40,6 +40,16 @@ class InstrumentTestCase(unittest.TestCase):
         self.assertEqual(i.__class__.__name__, 'NovaSeq')
         self.assertEqual(i.completed_marker_file(), 'CopyComplete.txt')
 
+        #NovaSeqXPlus
+        run_parameters = {
+            'RunParameters': {
+                'InstrumentSerialNumber': 'LH123'
+            }
+        }
+        i = InstrumentFactory.get_instrument(run_parameters)
+        self.assertEqual(i.__class__.__name__, 'NovaSeqXPlus')
+        self.assertEqual(i.completed_marker_file(), 'CopyComplete.txt')
+
         # iSeq
         run_parameters = {
             'RunParameters': {

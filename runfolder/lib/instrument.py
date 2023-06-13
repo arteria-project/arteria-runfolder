@@ -17,7 +17,8 @@ class InstrumentFactory():
             return val
 
         # Other instrument id's are at the top level of RunParameters
-        for key in ["InstrumentName", "InstrumentId", "ScannerID"]:
+        for key in ["InstrumentName", "InstrumentId", "ScannerID", "InstrumentSerialNumber"]:
+
             if key in run_parameters.keys():
                 return run_parameters.get(key)
 
