@@ -17,7 +17,8 @@ class InstrumentFactory():
             return val
 
         # Other instrument id's are at the top level of RunParameters
-        for key in ["InstrumentName", "InstrumentId", "ScannerID"]:
+        for key in ["InstrumentName", "InstrumentId", "ScannerID", "InstrumentSerialNumber"]:
+
             if key in run_parameters.keys():
                 return run_parameters.get(key)
 
@@ -33,6 +34,8 @@ class InstrumentFactory():
 
         if re.search(NovaSeq.ID_PATTERN, instrument_id):
             return NovaSeq()
+        if re.search(NovaSeqXPlus.ID_PATTERN, instrument_id):
+            return NovaSeqXPlus()
         if re.search(ISeq.ID_PATTERN, instrument_id):
             return ISeq()
         if re.search(MiSeq.ID_PATTERN, instrument_id):
@@ -60,6 +63,12 @@ class NovaSeq(Instrument):
     def completed_marker_file():
         return Instrument.COMPLETED_MARKER_FILE_COPY_COMPLETE
 
+class NovaSeqXPlus(Instrument):
+    ID_PATTERN = '^LH'
+
+    @staticmethod
+    def completed_marker_file():
+        return Instrument.COMPLETED_MARKER_FILE_COPY_COMPLETE
 
 class ISeq(Instrument):
     ID_PATTERN = '^FS'
