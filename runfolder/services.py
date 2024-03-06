@@ -317,10 +317,22 @@ class RunfolderService:
         try:
             barcode = run_parameters['RunParameters']['RfidsInfo']['LibraryTubeSerialBarcode']
         except KeyError:
-            # Library tube barcode is not available for all run types,
-            # it is therefore expected to not be found in all cases
-            self._logger.debug("Library tube barcode not found")
-            return None
+            try:
+                # Novaseq X Plus barcode is located in ConsumableInfo -> SerialNumber where type is SampleTube
+                consumables = run_parameters["RunParameters"]["ConsumableInfo"]["ConsumableInfo"]
+                barcode = next(
+                    (
+                        consumable["SerialNumber"]
+                        for consumable in consumables
+                        if consumable['Type'] == "SampleTube"
+                    ),
+                    None,
+                )
+            except KeyError:
+                # Library tube barcode is not available for all run types,
+                # it is therefore expected to not be found in all cases
+                self._logger.debug("Library tube barcode not found")
+                return None
         except TypeError:
             self._logger.debug("[Rr]unParameters.xml not found")
             return None
