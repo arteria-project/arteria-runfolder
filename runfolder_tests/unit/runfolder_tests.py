@@ -119,6 +119,7 @@ class RunfolderServiceTestCase(unittest.TestCase):
                                 "RunParameters": {
                                     "ConsumableInfo": {
                                         "ConsumableInfo": [
+                                            {"Type": "Other", "SerialNumber": "INCORRECT123"},
                                             {"Type": "SampleTube", "SerialNumber": "LC1037822-LC1"}
                                         ]
                                     }
