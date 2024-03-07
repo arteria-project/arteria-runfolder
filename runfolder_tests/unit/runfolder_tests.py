@@ -110,6 +110,25 @@ class RunfolderServiceTestCase(unittest.TestCase):
         # Test
         self.assertEqual(runfolder_svc.get_library_tube_barcode('/path/to/runfolder/', runparameters_dict), 'NV0012345-LIB')
 
+    def test_get_novaseqxplus_library_tube_barcode_found(self):
+        # Setup
+        configuration_svc = dict()
+        configuration_svc["monitored_directories"] = ["/data/testarteria1/runfolders"]
+        runfolder_svc = RunfolderService(configuration_svc, logger)
+        runparameters_dict = {
+                                "RunParameters": {
+                                    "ConsumableInfo": {
+                                        "ConsumableInfo": [
+                                            {"Type": "Other", "SerialNumber": "INCORRECT123"},
+                                            {"Type": "SampleTube", "SerialNumber": "LC1037822-LC1"}
+                                        ]
+                                    }
+                                }
+                            }
+
+        # Test
+        self.assertEqual(runfolder_svc.get_library_tube_barcode('/path/to/runfolder/', runparameters_dict), 'LC1037822-LC1')
+
     def test_get_library_tube_barcode_not_found(self):
         # Setup
         configuration_svc = dict()
